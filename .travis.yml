@@ -1,0 +1,22 @@
+language: python
+python:
+  - 2.7
+  - 3.2
+  - 3.3
+  - 3.4
+  - pypy
+install:
+  - pip install -r test-requirements.txt
+script: nosetests
+after_success:
+  - codecov
+deploy:
+  distributions: sdist bdist_wheel
+  provider: pypi
+  on:
+    python: 2.7
+    tags: true
+    all_branches: true
+  user: sprockets
+  password:
+    secure: "ox6qm9oUyQGwuO5f651DNv8q8Mr1I7FrfnIuTU58y0Y+X8/g+1MWYvdc5q7Wevmnmu0dCJ3TIqYTJlHNR8lxJADzVXwzGxplr7ui68ZLI8oIcKT3Q/arqgP/IjF83p7zLmh7dYKpBcygh4OTp1F7X3f2pMIJsj4zUy9cTwxQhRIwbBn2XvtOdlgwwClPJJaL34vLDpiB1eBnOVQVI6JSXX5KJEeydIBaZS46yoe/ZLxTJsPFRdPRWcXYtYQVdEqZgPdMEWKpE+bg3YlYki5JvSI1goEzllyiheaOfeHUbzfakADqNafnbwJg9KJ+Qkpec/20TwDu+bUsLD5QzU8IrU5ycsrp78iJ7JL3LX9T6yFqdQSRcq9WEnQazRuMG+iT7EiW8+KiMPBTeNXilnQvVRaX6lV5twzIHdgIA6gzmtrzSiQxlGEGvvldJJXCzaoYfGK7LIxzYaXWdB3d5umW+3NQY710CPGHDLkIcQECrIxKot6IREyULhI/CO7josoAWzMBEwV8NWRtHQgDeo1W92NR4VBiiOY6R+TgVIhUiU53vqgRPc0DxrwX+fnro2Pj/Bys0VvyOqHWz/L0Mu5Hddu0ZxZRMTMaksxNBRRrXotjGLZvMaJVmMn8o3sKw8otjvhRPgEcCHOWDBqH7WRoXuPbk/r9L1gy7vj7EVUsmO8="
