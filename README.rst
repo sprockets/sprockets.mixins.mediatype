@@ -16,7 +16,7 @@ and can be installed via ``pip`` or ``easy_install``:
 
 Documentation
 -------------
-https://sprocketsmixinsmedia_type.readthedocs.org
+http://sprocketsmixinsmedia-type.readthedocs.org/en/latest/
 
 Example
 -------
@@ -75,7 +75,7 @@ type validation and serialization.
 
 Version History
 ---------------
-Available at https://sprocketsmixinsmedia_type.readthedocs.org/en/latest/history.html
+Available at http://sprocketsmixinsmedia-type.readthedocs.org/en/latest//en/latest/history.html
 
 .. |Version| image:: https://img.shields.io/pypi/v/sprockets.mixins.media_type.svg?
    :target: http://badge.fury.io/py/sprockets.mixins.media_type
@@ -90,4 +90,4 @@ Available at https://sprocketsmixinsmedia_type.readthedocs.org/en/latest/history
    :target: https://pypi.python.org/pypi/sprockets.mixins.media_type
 
 .. |License| image:: https://img.shields.io/pypi/l/sprockets.mixins.media_type.svg?
-   :target: https://sprockets.mixins.media_type.readthedocs.org
+   :target: http://sprocketsmixinsmedia-type.readthedocs.org/en/latest/
