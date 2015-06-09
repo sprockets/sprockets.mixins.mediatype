@@ -89,5 +89,5 @@ Available at http://sprocketsmixinsmedia-type.readthedocs.org/en/latest//en/late
 .. |Downloads| image:: https://img.shields.io/pypi/dm/sprockets.mixins.media_type.svg?
    :target: https://pypi.python.org/pypi/sprockets.mixins.media_type
 
-.. |License| image:: https://img.shields.io/pypi/l/sprockets.mixins.media_type.svg?
-   :target: http://sprocketsmixinsmedia-type.readthedocs.org/en/latest/
+.. |License| image:: http://img.shields.io/:license-mit-blue.svg
+   :target: http://doge.mit-license.org
