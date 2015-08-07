@@ -1,5 +1,5 @@
 """
-Sprockets.Mixins.Media_type
+Sprockets.Mixins.media_type
 ===========================
 
 """

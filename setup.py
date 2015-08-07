@@ -1,10 +1,37 @@
+#!/usr/bin/env python
+#
+
+import os
 import setuptools
+
+
+def read_requirements(file_name):
+    requirements = []
+    try:
+        with open(os.path.join('requires', file_name)) as req_file:
+            for req_line in req_file:
+                req_line = req_line.strip()
+                if '#' in req_line:
+                    req_line = req_line[0:req_line.find('#')].strip()
+                if req_line.startswith('-r'):
+                    req_line = req_line[2:].strip()
+                    requirements.extend(read_requirements(req_line))
+                else:
+                    requirements.append(req_line)
+    except IOError:
+        pass
+    return requirements
+
+
+install_requires = read_requirements('install.txt')
+setup_requires = read_requirements('setup.txt')
+tests_require = read_requirements('testing.txt')
 
 setuptools.setup(
     name='sprockets.mixins.media_type',
     version='0.0.0',
     description='A mixin for reporting handling content-type/accept headers',
-    long_description=open('test-requirements.txt', 'r').read(),
+    long_description='\n' + open('README.rst').read(),
     url='https://github.com/sprockets/sprockets.mixins.media_type',
     author='AWeber Communications',
     author_email='api@aweber.com',
@@ -27,12 +54,10 @@ setuptools.setup(
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
-    packages=['sprockets',
-              'sprockets.mixins',
-              'sprockets.mixins.media_type'],
-    package_data={'': ['LICENSE', 'README.md']},
-    include_package_data=True,
-    install_requires=['tornado'],
-    namespace_packages=['sprockets',
-                        'sprockets.mixins'],
+    packages=setuptools.find_packages(),
+    install_requires=install_requires,
+    setup_requires=setup_requires,
+    tests_require=tests_require,
+    namespace_packages=['sprockets', 'sprockets.mixins'],
+    test_suite='nose.collector',
     zip_safe=False)
