@@ -22,3 +22,10 @@ class ContentTypeTests(testing.AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'],
                          'application/json; charset="utf-8"')
+
+    def test_that_accept_header_is_obeyed(self):
+        response = self.fetch('/', method='POST', body='{}',
+                              headers={'Accept': 'application/msgpack'})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-Type'],
+                         'application/msgpack')

@@ -5,6 +5,8 @@ sprockets.mixins.media_type
 """
 import logging
 
+from ietfparse import algorithms, errors, headers
+
 
 version_info = (0, 0, 0)
 __version__ = '.'.join(str(v) for v in version_info)
@@ -56,6 +58,7 @@ class ContentSettings(object):
 
     def __init__(self):
         self._handlers = {}
+        self._available_types = []
         self.default_content_type = None
         self.default_encoding = None
 
@@ -68,6 +71,7 @@ class ContentSettings(object):
                            content_type, self._handers[content_type])
             return
 
+        self._available_types.append(headers.parse_content_type(content_type))
         self._handlers[content_type] = handler
 
     @classmethod
@@ -77,10 +81,16 @@ class ContentSettings(object):
             setattr(application, '_content_settings', cls())
         return application._content_settings
 
-def _get_content_settings(application):
-    if not hasattr(application, '_content_settings'):
-        setattr(application, '_content_settings', ContentSettings())
-    return getattr(application, '_content_settings')
+    @property
+    def available_content_types(self):
+        """
+        List of the content types that are registered.
+
+        This is a sequence of :class:`ietfparse.datastructures.ContentType`
+        instances.
+
+        """
+        return self._available_types
 
 
 def add_binary_content_type(application, content_type, pack, unpack):
@@ -161,8 +171,19 @@ class ContentMixin(object):
 
     def get_response_content_type(self):
         """Figure out what content type will be used in the response."""
-        settings = ContentSettings.from_application(self.application)
-        return settings.default_content_type
+        if self._best_response_match is None:
+            settings = ContentSettings.from_application(self.application)
+            acceptable = headers.parse_http_accept_header(
+                self.request.headers.get('Accept', '*/*'))
+            try:
+                selected, _ = algorithms.select_content_type(
+                    acceptable, settings.available_content_types)
+                self._best_response_match = '/'.join(
+                    [selected.content_type, selected.content_subtype])
+            except errors.NoMatch:
+                self._best_response_match = settings.default_content_type
+
+        return self._best_response_match
 
     def get_request_body(self):
         """Fetch (and cache) the request body as a dictionary."""
