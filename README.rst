@@ -1,93 +1,57 @@
 sprockets.mixins.media_type
 ===========================
-A mixin that performs Content-Type negotiation and request/response (de)serialization.
+A mixin that performs Content-Type negotiation and request/response
+(de)serialization.
 
-|Version| |Downloads| |Status| |Coverage| |License|
+This mix-in adds two methods to a ``tornado.web.RequestHandler`` instance:
 
-Installation
-------------
-``sprockets.mixins.media_type`` is available on the
-`Python Package Index <https://pypi.python.org/pypi/sprockets.mixins.media_type>`_
-and can be installed via ``pip`` or ``easy_install``:
+- ``get_request_body() -> dict``: deserializes the request body according
+  to the HTTP ``Content-Type`` header and returns the deserialized body.
+- ``send_response(object)``: serializes the response into the content type
+  requested by the ``Accept`` header.
 
-.. code:: bash
+Support for a content types is enabled by calling either the
+``add_binary_content_type`` or ``add_text_content_type`` function with the
+``tornado.web.Application`` instance, the content type, encoding and decoding
+functions as parameters:
 
-  pip install sprockets.mixins.media_type
+.. code-block:: python
 
-Documentation
--------------
-http://sprocketsmixinsmedia-type.readthedocs.org/en/latest/
+   import json
 
-Example
--------
-The following example demonstrates how to use the Mix-in to handle media
-type validation and serialization.
+   from sprockets.mixins import media_type
+   from tornado import web
 
-.. code:: python
+   def make_application():
+       application = web.Application([
+           # insert your handlers here
+       ])
 
-    from tornado import web, gen
-    from sprockets.mixins import media_type
+       media_type.add_text_content_type(application,
+                                        'application/json', 'utf-8',
+                                        json.dumps, json.loads)
 
+       return application
 
-    class MyRequestHandler(media_type.MediaTypeMixin, web.RequestHandler):
+The *add content type* functions will add a attribute to the ``Application``
+instance that the mix-in uses to manipulate the request and response bodies.
 
-            @gen.coroutine
-            def post(self, **kwargs):
-                # Validate the Content-Type header using the Mix-in
-                if not self.is_valid_content_type():
-                    self.set_status(415, 'Unsupported content type')
-                    self.finish()
-                    return
+.. code-block:: python
 
-                # Deserialize your request payload
-                data = self.decode_request()
+   from sprockets.mixins import media_type
+   from tornado import web
 
-                # Ensure that you get some data out of it!
-                if not data:
-                    self.set_status(400)
-                    self.finish()
-                    return
+   class SomeHandler(media_type.ContentMixin, web.RequestHandler):
+       def get(self):
+           self.send_response({'data': 'value'})
+           self.finish()
 
-                # Manipulate your data and do business stuff with it
-                data.pop('the_key')
+       def post(self):
+           body = self.get_request_body()
+           # do whatever
+           self.send_response({'action': 'performed'})
+           self.finish()
 
-                self.set_status(200)
-
-                # Automatically serialize your data using the HTTP Accept headers
-                self.write(data)
-
-            @gen.coroutine
-            def get(self, some_id):
-                # Validate the Accept headers using the Mix-in
-                if not self.is_valid_accept_header():
-                    self.set_status(406, 'Invalid Accept header')
-                    self.finish()
-                    return
-
-                # Maybe do some lookups from the database or get some data from somewhere
-                data = {'some_id': some_id}
-
-                self.set_status(200)
-
-                # Automatically serialize your data using the HTTP Accept headers
-                self.write(data)
-
-
-Version History
----------------
-Available at http://sprocketsmixinsmedia-type.readthedocs.org/en/latest//en/latest/history.html
-
-.. |Version| image:: https://img.shields.io/pypi/v/sprockets.mixins.media_type.svg?
-   :target: http://badge.fury.io/py/sprockets.mixins.media_type
-
-.. |Status| image:: https://img.shields.io/travis/sprockets/sprockets.mixins.media_type.svg?
-   :target: https://travis-ci.org/sprockets/sprockets.mixins.media_type
-
-.. |Coverage| image:: https://img.shields.io/codecov/c/github/sprockets/sprockets.mixins.media_type.svg?
-   :target: https://codecov.io/github/sprockets/sprockets.mixins.media_type?branch=master
-
-.. |Downloads| image:: https://img.shields.io/pypi/dm/sprockets.mixins.media_type.svg?
-   :target: https://pypi.python.org/pypi/sprockets.mixins.media_type
-
-.. |License| image:: http://img.shields.io/:license-mit-blue.svg
-   :target: http://doge.mit-license.org
+Based on the settings stored in the ``Application`` instance and the HTTP
+headers, the request and response data will be handled correctly or the
+appropriate HTTP exceptions will be raised.
