@@ -3,6 +3,8 @@ sprockets.mixins.media_type
 A mixin that performs Content-Type negotiation and request/response
 (de)serialization.
 
+|Documentation| |Build Badge| |Package Info|
+
 This mix-in adds two methods to a ``tornado.web.RequestHandler`` instance:
 
 - ``get_request_body() -> dict``: deserializes the request body according
@@ -55,3 +57,10 @@ instance that the mix-in uses to manipulate the request and response bodies.
 Based on the settings stored in the ``Application`` instance and the HTTP
 headers, the request and response data will be handled correctly or the
 appropriate HTTP exceptions will be raised.
+
+.. |Documentation| image:: https://readthedocs.org/projects/sprocketsmixinsmedia-type/?badge=latest
+   :target: https://sprocketsmixinsmedia_type.readthedocs.org/
+.. |Build Badge| image:: https://travis-ci.org/sprockets/sprockets.mixins.media_type.svg
+   :target: https://travis-ci.org/sprockets/sprockets.mixins.media_type
+.. |Package Info| image:: https://img.shields.io/pypi/v/sprockets.mixins.media_type.svg
+   :target: https://pypi.python.org/sprockets.mixins.media_type
