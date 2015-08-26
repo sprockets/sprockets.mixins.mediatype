@@ -6,6 +6,7 @@ sprockets.mixins.media_type
 import logging
 
 from ietfparse import algorithms, errors, headers
+from tornado import web
 
 
 version_info = (0, 0, 0)
@@ -73,6 +74,9 @@ class ContentSettings(object):
 
         self._available_types.append(headers.parse_content_type(content_type))
         self._handlers[content_type] = handler
+
+    def get(self, content_type, default=None):
+        return self._handlers.get(content_type, default)
 
     @classmethod
     def from_application(cls, application):
@@ -186,11 +190,28 @@ class ContentMixin(object):
         return self._best_response_match
 
     def get_request_body(self):
-        """Fetch (and cache) the request body as a dictionary."""
+        """
+        Fetch (and cache) the request body as a dictionary.
+
+        :raise web.HTTPError: if the content type cannot be decoded.
+            The status code is set to 415 Unsupported Media Type
+
+        """
         if self._request_body is None:
             settings = ContentSettings.from_application(self.application)
-            handler = settings[settings.default_content_type]
-            self._request_body = handler.from_bytes(self.request.body)
+            content_type_header = headers.parse_content_type(
+                self.request.headers.get('Content-Type',
+                                         settings.default_content_type))
+            content_type = '/'.join([content_type_header.content_type,
+                                     content_type_header.content_subtype])
+            try:
+                handler = settings[content_type]
+                self._request_body = handler.from_bytes(self.request.body)
+
+            except KeyError:
+                raise web.HTTPError(415, 'cannot decode body of type %s',
+                                    content_type)
+
         return self._request_body
 
     def send_response(self, body, set_content_type=True):
