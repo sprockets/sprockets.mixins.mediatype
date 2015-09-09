@@ -29,7 +29,7 @@ tests_require = read_requirements('testing.txt')
 
 setuptools.setup(
     name='sprockets.mixins.media_type',
-    version='0.0.0',
+    version='1.0.0',
     description='A mixin for reporting handling content-type/accept headers',
     long_description='\n' + open('README.rst').read(),
     url='https://github.com/sprockets/sprockets.mixins.media_type',
