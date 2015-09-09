@@ -58,8 +58,8 @@ Based on the settings stored in the ``Application`` instance and the HTTP
 headers, the request and response data will be handled correctly or the
 appropriate HTTP exceptions will be raised.
 
-.. |Documentation| image:: https://readthedocs.org/projects/sprocketsmixinsmedia-type/?badge=latest
-   :target: https://sprocketsmixinsmedia_type.readthedocs.org/
+.. |Documentation| image:: https://readthedocs.org/projects/sprocketsmixinsmedia-type/badge/?version=latest
+   :target: https://sprocketsmixinsmedia-type.readthedocs.org/
 .. |Build Badge| image:: https://travis-ci.org/sprockets/sprockets.mixins.media_type.svg
    :target: https://travis-ci.org/sprockets/sprockets.mixins.media_type
 .. |Package Info| image:: https://img.shields.io/pypi/v/sprockets.mixins.media_type.svg
