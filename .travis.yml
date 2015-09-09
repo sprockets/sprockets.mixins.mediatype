@@ -1,13 +1,12 @@
 language: python
 python:
   - 2.7
-  - 3.2
-  - 3.3
   - 3.4
   - pypy
 install:
   - pip install codecov
-  - pip install -r test-requirements.txt
+  - pip install -r requires/installation.txt
+  - pip install -r requires/testing.txt
 script: nosetests
 after_success:
   - codecov

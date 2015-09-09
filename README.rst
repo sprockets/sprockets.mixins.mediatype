@@ -1,93 +1,66 @@
 sprockets.mixins.media_type
 ===========================
-A mixin that performs Content-Type negotiation and request/response (de)serialization.
+A mixin that performs Content-Type negotiation and request/response
+(de)serialization.
 
-|Version| |Downloads| |Status| |Coverage| |License|
+|Documentation| |Build Badge| |Package Info|
 
-Installation
-------------
-``sprockets.mixins.media_type`` is available on the
-`Python Package Index <https://pypi.python.org/pypi/sprockets.mixins.media_type>`_
-and can be installed via ``pip`` or ``easy_install``:
+This mix-in adds two methods to a ``tornado.web.RequestHandler`` instance:
 
-.. code:: bash
+- ``get_request_body() -> dict``: deserializes the request body according
+  to the HTTP ``Content-Type`` header and returns the deserialized body.
+- ``send_response(object)``: serializes the response into the content type
+  requested by the ``Accept`` header.
 
-  pip install sprockets.mixins.media_type
+Support for a content types is enabled by calling either the
+``add_binary_content_type`` or ``add_text_content_type`` function with the
+``tornado.web.Application`` instance, the content type, encoding and decoding
+functions as parameters:
 
-Documentation
--------------
-http://sprocketsmixinsmedia-type.readthedocs.org/en/latest/
+.. code-block:: python
 
-Example
--------
-The following example demonstrates how to use the Mix-in to handle media
-type validation and serialization.
+   import json
 
-.. code:: python
+   from sprockets.mixins import media_type
+   from tornado import web
 
-    from tornado import web, gen
-    from sprockets.mixins import media_type
+   def make_application():
+       application = web.Application([
+           # insert your handlers here
+       ])
 
+       media_type.add_text_content_type(application,
+                                        'application/json', 'utf-8',
+                                        json.dumps, json.loads)
 
-    class MyRequestHandler(media_type.MediaTypeMixin, web.RequestHandler):
+       return application
 
-            @gen.coroutine
-            def post(self, **kwargs):
-                # Validate the Content-Type header using the Mix-in
-                if not self.is_valid_content_type():
-                    self.set_status(415, 'Unsupported content type')
-                    self.finish()
-                    return
+The *add content type* functions will add a attribute to the ``Application``
+instance that the mix-in uses to manipulate the request and response bodies.
 
-                # Deserialize your request payload
-                data = self.decode_request()
+.. code-block:: python
 
-                # Ensure that you get some data out of it!
-                if not data:
-                    self.set_status(400)
-                    self.finish()
-                    return
+   from sprockets.mixins import media_type
+   from tornado import web
 
-                # Manipulate your data and do business stuff with it
-                data.pop('the_key')
+   class SomeHandler(media_type.ContentMixin, web.RequestHandler):
+       def get(self):
+           self.send_response({'data': 'value'})
+           self.finish()
 
-                self.set_status(200)
+       def post(self):
+           body = self.get_request_body()
+           # do whatever
+           self.send_response({'action': 'performed'})
+           self.finish()
 
-                # Automatically serialize your data using the HTTP Accept headers
-                self.write(data)
+Based on the settings stored in the ``Application`` instance and the HTTP
+headers, the request and response data will be handled correctly or the
+appropriate HTTP exceptions will be raised.
 
-            @gen.coroutine
-            def get(self, some_id):
-                # Validate the Accept headers using the Mix-in
-                if not self.is_valid_accept_header():
-                    self.set_status(406, 'Invalid Accept header')
-                    self.finish()
-                    return
-
-                # Maybe do some lookups from the database or get some data from somewhere
-                data = {'some_id': some_id}
-
-                self.set_status(200)
-
-                # Automatically serialize your data using the HTTP Accept headers
-                self.write(data)
-
-
-Version History
----------------
-Available at http://sprocketsmixinsmedia-type.readthedocs.org/en/latest//en/latest/history.html
-
-.. |Version| image:: https://img.shields.io/pypi/v/sprockets.mixins.media_type.svg?
-   :target: http://badge.fury.io/py/sprockets.mixins.media_type
-
-.. |Status| image:: https://img.shields.io/travis/sprockets/sprockets.mixins.media_type.svg?
+.. |Documentation| image:: https://readthedocs.org/projects/sprocketsmixinsmedia-type/?badge=latest
+   :target: https://sprocketsmixinsmedia_type.readthedocs.org/
+.. |Build Badge| image:: https://travis-ci.org/sprockets/sprockets.mixins.media_type.svg
    :target: https://travis-ci.org/sprockets/sprockets.mixins.media_type
-
-.. |Coverage| image:: https://img.shields.io/codecov/c/github/sprockets/sprockets.mixins.media_type.svg?
-   :target: https://codecov.io/github/sprockets/sprockets.mixins.media_type?branch=master
-
-.. |Downloads| image:: https://img.shields.io/pypi/dm/sprockets.mixins.media_type.svg?
-   :target: https://pypi.python.org/pypi/sprockets.mixins.media_type
-
-.. |License| image:: http://img.shields.io/:license-mit-blue.svg
-   :target: http://doge.mit-license.org
+.. |Package Info| image:: https://img.shields.io/pypi/v/sprockets.mixins.media_type.svg
+   :target: https://pypi.python.org/sprockets.mixins.media_type
