@@ -62,5 +62,5 @@ appropriate HTTP exceptions will be raised.
    :target: https://sprocketsmixinsmedia-type.readthedocs.org/
 .. |Build Badge| image:: https://travis-ci.org/sprockets/sprockets.mixins.media_type.svg
    :target: https://travis-ci.org/sprockets/sprockets.mixins.media_type
-.. |Package Info| image:: https://img.shields.io/pypi/v/sprockets.mixins.media_type.svg
-   :target: https://pypi.python.org/sprockets.mixins.media_type
+.. |Package Info| image:: https://img.shields.io/pypi/v/sprockets.mixins.mediatype.svg
+   :target: https://pypi.python.org/sprockets.mixins.mediatype

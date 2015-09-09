@@ -9,7 +9,7 @@ from ietfparse import algorithms, errors, headers
 from tornado import escape, web
 
 
-version_info = (1, 0, 1)
+version_info = (1, 0, 2)
 __version__ = '.'.join(str(v) for v in version_info)
 logger = logging.getLogger(__name__)
 

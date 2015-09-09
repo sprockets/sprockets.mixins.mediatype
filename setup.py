@@ -28,8 +28,8 @@ setup_requires = read_requirements('setup.txt')
 tests_require = read_requirements('testing.txt')
 
 setuptools.setup(
-    name='sprockets.mixins.media_type',
-    version='1.0.1',
+    name='sprockets.mixins.mediatype',
+    version='1.0.2',
     description='A mixin for reporting handling content-type/accept headers',
     long_description='\n' + open('README.rst').read(),
     url='https://github.com/sprockets/sprockets.mixins.media_type',
