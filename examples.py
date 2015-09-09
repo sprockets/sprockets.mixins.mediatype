@@ -2,12 +2,12 @@ import json
 import logging
 import signal
 
-from sprockets.mixins import media_type
+from sprockets.mixins import mediatype
 from tornado import ioloop, web
 import msgpack
 
 
-class SimpleHandler(media_type.ContentMixin, web.RequestHandler):
+class SimpleHandler(mediatype.ContentMixin, web.RequestHandler):
 
     def post(self):
         body = self.get_request_body()
@@ -18,12 +18,12 @@ class SimpleHandler(media_type.ContentMixin, web.RequestHandler):
 
 def make_application(**settings):
     application = web.Application([web.url(r'/', SimpleHandler)], **settings)
-    media_type.set_default_content_type(application, 'application/json',
-                                        encoding='utf-8')
-    media_type.add_binary_content_type(application, 'application/msgpack',
-                                       msgpack.packb, msgpack.unpackb)
-    media_type.add_text_content_type(application, 'application/json', 'utf-8',
-                                     json.dumps, json.loads)
+    mediatype.set_default_content_type(application, 'application/json',
+                                       encoding='utf-8')
+    mediatype.add_binary_content_type(application, 'application/msgpack',
+                                      msgpack.packb, msgpack.unpackb)
+    mediatype.add_text_content_type(application, 'application/json', 'utf-8',
+                                    json.dumps, json.loads)
     return application
 
 
