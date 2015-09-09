@@ -1,5 +1,5 @@
-sprockets.mixins.media_type
-===========================
+sprockets.mixins.mediatype
+==========================
 A mixin that performs Content-Type negotiation and request/response
 (de)serialization.
 
