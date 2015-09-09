@@ -1,5 +1,5 @@
 import alabaster
-from sprockets.mixins.media_type import __version__
+from sprockets.mixins.mediatype import __version__
 
 needs_sphinx = '1.0'
 extensions = ['sphinx.ext.autodoc',
