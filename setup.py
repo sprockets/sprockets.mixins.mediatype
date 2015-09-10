@@ -23,8 +23,7 @@ def read_requirements(file_name):
     return requirements
 
 
-install_requires = read_requirements('install.txt')
-setup_requires = read_requirements('setup.txt')
+install_requires = read_requirements('installation.txt')
 tests_require = read_requirements('testing.txt')
 
 setuptools.setup(
@@ -56,7 +55,6 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(),
     install_requires=install_requires,
-    setup_requires=setup_requires,
     tests_require=tests_require,
     namespace_packages=['sprockets', 'sprockets.mixins'],
     test_suite='nose.collector',
