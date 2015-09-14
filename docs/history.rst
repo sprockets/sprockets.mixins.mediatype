@@ -1,6 +1,11 @@
 Version History
 ===============
 
+`1.0.4`_ (14 Sep 2015)
+---------------------
+- Support using the default_content_type in the settings if request does not
+  contain the Accept header
+
 `1.0.3`_ (10 Sep 2015)
 ---------------------
 - Update installation files
@@ -17,6 +22,7 @@ Version History
 ---------------------
 - Initial Release
 
+.. _1.0.4: https://github.com/sprockets/sprockets.http/compare/1.0.3...1.0.4
 .. _1.0.3: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.0.3
 .. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2
 .. _1.0.1: https://github.com/sprockets/sprockets.http/compare/1.0.0...1.0.1
