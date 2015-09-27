@@ -23,7 +23,7 @@ instances.
 import logging
 
 from ietfparse import algorithms, errors, headers
-from tornado import escape, web
+from tornado import web
 
 from .transcoders import BinaryContentHandler, TextContentHandler
 

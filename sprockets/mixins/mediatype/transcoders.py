@@ -1,13 +1,21 @@
 """
 Content transcoding classes & functions.
 
+- :class:`BinaryContentHandler` basic transcoder for binary types that
+  simply calls functions for encoding and decoding
+- :class:`TextContentHandler` transcoder that translates binary bodies
+  to text before calling functions that encode & decode text
+- :class:`JSONTranscoder` intelligent transcoding for JSON bodies
+
 The :class:`sprockets.mixins.mediatype.ContentMixin` uses transcoder
 instances *under the hood*.  A transcoder is responsible for transforming
 objects to and from the :class:`bytes` instances held in a request body.
 This module implements the transcoders.
 
 """
+import base64
 import json
+import uuid
 
 from tornado import escape
 
@@ -133,6 +141,23 @@ class JSONTranscoder(TextContentHandler):
     implement your own versions of these methods to add support for
     other types that you find yourself using a lot.
 
+    The following types are supported:
+
+    +-------------------------------+----------------------------------------+
+    | Type                          | Format                                 |
+    +-------------------------------+----------------------------------------+
+    | :class:`bytes`,               | Base64 encoded string.                 |
+    | :class:`bytearray`,           |                                        |
+    | :class:`memoryview`           |                                        |
+    +-------------------------------+----------------------------------------+
+    | :class:`datetime.datetime`    | ISO8601 date time in extended format.  |
+    |                               | Includes separators, milliseconds, and |
+    |                               | timezone designator.  Same as          |
+    |                               | ``strftime('%Y-%m-%dT%H:%M:%S.%f%z')`` |
+    +-------------------------------+----------------------------------------+
+    | :class:`uuid.UUID`            | Same as ``str(value)``                 |
+    +-------------------------------+----------------------------------------+
+
     """
 
     def __init__(self, content_type='application/json',
@@ -168,6 +193,13 @@ class JSONTranscoder(TextContentHandler):
         :raises TypeError: if the object cannot be encoded
 
         """
+        if hasattr(obj, 'strftime'):
+            return obj.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+        if isinstance(obj, uuid.UUID):
+            return str(obj)
+        if isinstance(obj, (bytes, bytearray, memoryview)):
+            return base64.b64encode(obj).decode('ASCII')
+
         raise TypeError(
             '{} is not JSON serializable'.format(obj.__class__.__name__))
 

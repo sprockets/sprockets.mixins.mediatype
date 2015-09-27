@@ -1,9 +1,27 @@
+import base64
+import datetime
 import json
+import unittest
+import uuid
 
 from tornado import testing
 import umsgpack
 
+from sprockets.mixins.mediatype import transcoders
 import examples
+
+
+class UTC(datetime.tzinfo):
+    ZERO = datetime.timedelta(0)
+
+    def utcoffset(self, _):
+        return self.ZERO
+
+    def tzname(self, _):
+        return 'UTC'
+
+    def dst(self, _):
+        return self.ZERO
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
@@ -66,3 +84,33 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body.decode('utf-8')), body)
+
+
+class JSONTranscoderTests(unittest.TestCase):
+
+    def setUp(self):
+        super(JSONTranscoderTests, self).setUp()
+        self.transcoder = transcoders.JSONTranscoder()
+
+    def test_that_encoding_unrecognized_type_raise_type_error(self):
+        with self.assertRaises(TypeError):
+            self.transcoder.to_bytes(object())
+
+    def test_that_datetimes_encoded_as_iso8601(self):
+        value = datetime.datetime.utcnow().replace(tzinfo=UTC())
+        _, json_bytes = self.transcoder.to_bytes(value)
+        self.assertEqual(
+            json_bytes,
+            value.strftime('"%Y-%m-%dT%H:%M:%S.%f%z"').encode('ASCII'))
+
+    def test_that_uuids_are_encoded_as_strings(self):
+        value = uuid.uuid4()
+        _, json_bytes = self.transcoder.to_bytes(value)
+        self.assertEqual(json_bytes, '"{}"'.format(value).encode('ASCII'))
+
+    def test_that_bytes_are_base64_encoded(self):
+        value = bytearray(range(0, 255))
+        _, json_bytes = self.transcoder.to_bytes(value)
+        self.assertEqual(
+            json_bytes.decode('ASCII'),
+            '"{}"'.format(base64.b64encode(value).decode('ASCII')))
