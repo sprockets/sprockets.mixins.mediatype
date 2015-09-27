@@ -5,6 +5,8 @@ Content handling for Tornado.
   content type
 - :func:`.add_text_content_type` register transcoders for a textual
   content type
+- :func:`.add_transcoder` register a transcoder instance for a
+  content type
 - :class:`.ContentSettings` an instance of this is attached to
   :class:`tornado.web.Application` to hold the content mapping
   information for the application
@@ -124,8 +126,8 @@ def add_binary_content_type(application, content_type, pack, unpack):
         dictionary.  ``unpack(bytes) -> dict``
 
     """
-    settings = ContentSettings.from_application(application)
-    settings[content_type] = BinaryContentHandler(content_type, pack, unpack)
+    add_transcoder(application, content_type,
+                   BinaryContentHandler(content_type, pack, unpack))
 
 
 def add_text_content_type(application, content_type, default_encoding,
@@ -142,9 +144,9 @@ def add_text_content_type(application, content_type, default_encoding,
         ``loads(str, encoding:str) -> dict``
 
     """
-    settings = ContentSettings.from_application(application)
-    settings[content_type] = TextContentHandler(content_type, dumps, loads,
-                                                default_encoding)
+    add_transcoder(application, content_type,
+                   TextContentHandler(content_type, dumps, loads,
+                                      default_encoding))
 
 
 def set_default_content_type(application, content_type, encoding=None):
@@ -159,6 +161,35 @@ def set_default_content_type(application, content_type, encoding=None):
     settings = ContentSettings.from_application(application)
     settings.default_content_type = content_type
     settings.default_encoding = encoding
+
+
+def add_transcoder(application, content_type, transcoder):
+    """
+    Register a transcoder for a specific content type.
+
+    :param tornado.web.Application application: the application to modify
+    :param str content_type: the content type to add
+    :param transcoder: object that implements methods to transform
+        between :class:`bytes` and :class:`object` instances
+
+    The `transcoder` instance is required to implement the following
+    protocol.
+
+    .. method:: transcoder.to_bytes(self, data, encoding) -> bytes
+
+       :param object data: object to encode
+       :param str encoding: character encoding to apply or :data:`None`
+       :returns: encoded :class:`bytes` instance
+
+    .. method:: transcoder.from_bytes(self, data, encoding) -> object
+
+       :param bytes data: byte stream to decode object from
+       :param str encoding: character encoding to apply or :data:`None`
+       :returns: decoded :class:`object` instance
+
+    """
+    settings = ContentSettings.from_application(application)
+    settings[content_type] = transcoder
 
 
 class ContentMixin(object):

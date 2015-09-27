@@ -1,6 +1,10 @@
 Version History
 ===============
 
+`Next Release`_
+---------------
+- Add :func:`sprockets.mixins.mediatype.add_transcoder`
+
 `1.0.4`_ (14 Sep 2015)
 ---------------------
 - Support using the default_content_type in the settings if request does not
@@ -22,8 +26,10 @@ Version History
 ---------------------
 - Initial Release
 
-.. _1.0.4: https://github.com/sprockets/sprockets.http/compare/1.0.3...1.0.4
-.. _1.0.3: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.0.3
-.. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2
-.. _1.0.1: https://github.com/sprockets/sprockets.http/compare/1.0.0...1.0.1
-.. _1.0.0: https://github.com/sprockets/sprockets.http/compare/0.0.0...1.0.0
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.4...master
+
+.. _1.0.4: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.3...1.0.4
+.. _1.0.3: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.2...1.0.3
+.. _1.0.2: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.1...1.0.2
+.. _1.0.1: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.0...1.0.1
+.. _1.0.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/0.0.0...1.0.0
