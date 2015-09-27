@@ -9,7 +9,7 @@ from ietfparse import algorithms, errors, headers
 from tornado import escape, web
 
 
-version_info = (1, 0, 3)
+version_info = (1, 0, 4)
 __version__ = '.'.join(str(v) for v in version_info)
 logger = logging.getLogger(__name__)
 
@@ -178,7 +178,10 @@ class ContentMixin(object):
         if self._best_response_match is None:
             settings = ContentSettings.from_application(self.application)
             acceptable = headers.parse_http_accept_header(
-                self.request.headers.get('Accept', '*/*'))
+                self.request.headers.get(
+                    'Accept',
+                    settings.default_content_type
+                    if settings.default_content_type else '*/*'))
             try:
                 selected, _ = algorithms.select_content_type(
                     acceptable, settings.available_content_types)

@@ -34,6 +34,13 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         self.assertEqual(response.headers['Content-Type'],
                          'application/msgpack')
 
+    def test_that_default_content_type_is_set_on_response(self):
+        response = self.fetch('/', method='POST', body=msgpack.packb('{}'),
+                              headers={'Content-Type': 'application/msgpack'})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-Type'],
+                         'application/json; charset="utf-8"')
+
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
 
