@@ -39,7 +39,7 @@ class BinaryContentHandler(object):
         :param str encoding: ignored
         :returns: :class:`tuple` of the selected content
             type and the :class:`bytes` representation of
-            `inst_data`)
+            `inst_data`
 
         """
         return self.content_type, self._pack(inst_data)
@@ -93,7 +93,7 @@ class TextContentHandler(object):
             :attr:`default_encoding`
         :returns: :class:`tuple` of the selected content
             type and the :class:`bytes` representation of
-            `inst_data`)
+            `inst_data`
 
         """
         selected = encoding or self.default_encoding

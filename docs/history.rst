@@ -6,12 +6,12 @@ Version History
 - Add :func:`sprockets.mixins.mediatype.add_transcoder`
 
 `1.0.4`_ (14 Sep 2015)
----------------------
+----------------------
 - Support using the default_content_type in the settings if request does not
   contain the Accept header
 
 `1.0.3`_ (10 Sep 2015)
----------------------
+----------------------
 - Update installation files
 
 `1.0.2`_ (9 Sep 2015)
