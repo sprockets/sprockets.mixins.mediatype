@@ -4,6 +4,7 @@ Version History
 `Next Release`_
 ---------------
 - Add :func:`sprockets.mixins.mediatype.add_transcoder`
+- Add :class:`sprockets.mixins.mediatype.transcoders.JSONTranscoder`
 
 `1.0.4`_ (14 Sep 2015)
 ----------------------

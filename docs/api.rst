@@ -51,3 +51,6 @@ custom transcoders.
 
 .. autoclass:: sprockets.mixins.mediatype.transcoders.TextContentHandler
    :members:
+
+.. autoclass:: sprockets.mixins.mediatype.transcoders.JSONTranscoder
+   :members:

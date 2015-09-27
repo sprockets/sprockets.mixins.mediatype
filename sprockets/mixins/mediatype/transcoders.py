@@ -7,6 +7,8 @@ objects to and from the :class:`bytes` instances held in a request body.
 This module implements the transcoders.
 
 """
+import json
+
 from tornado import escape
 
 
@@ -113,3 +115,78 @@ class TextContentHandler(object):
 
         """
         return self._loads(data.decode(encoding or self.default_encoding))
+
+
+class JSONTranscoder(TextContentHandler):
+    """
+    JSON transcoder that understands common types.
+
+    :param str content_type: the MIME content type that describes
+        textual representations.  The default is ``application/json``
+    :param str default_encoding: the default text character set.
+        The sensible default here is ``utf-8`` but you can override
+        it if necessary.
+
+    This calls :func:`json.dumps` and :func:`json.loads` passing the
+    :meth:`load_object_hook` and :meth:`dump_default` to implement
+    encoding and decoding of common types.  You can sub-class and
+    implement your own versions of these methods to add support for
+    other types that you find yourself using a lot.
+
+    """
+
+    def __init__(self, content_type='application/json',
+                 default_encoding='utf-8'):
+
+        super(JSONTranscoder, self).__init__(content_type, self.dumps,
+                                             self.loads, default_encoding)
+        self.dump_options = {
+            'default': self.dump_default,
+            'separators': (',', ':'),
+        }
+        self.load_options = {
+            'object_hook': self.load_object_hook,
+        }
+
+    def load_object_hook(self, obj):
+        """
+        Called with objects as they are decoded.
+
+        :param object obj: object that was decoded.  This is a
+            :class:`list` or :class:`dict`.
+        :returns: possibly modified version of `obj`
+
+        """
+        return obj
+
+    def dump_default(self, obj):
+        """
+        Called to encode unrecognized objects.
+
+        :param object obj: object that is not of a recognized type
+        :returns: the encoded object as a recognized type
+        :raises TypeError: if the object cannot be encoded
+
+        """
+        raise TypeError(
+            '{} is not JSON serializable'.format(obj.__class__.__name__))
+
+    def dumps(self, data):
+        """
+        Transform an object into :class:`str`
+
+        :param object data: object to encode
+        :returns: :class:`str` representation of `data`
+
+        """
+        return json.dumps(data, **self.dump_options)
+
+    def loads(self, data):
+        """
+        Transform a :class:`str` into an object.
+
+        :param str data: representation to decode
+        :returns: :class:`object` representation from `data`
+
+        """
+        return json.loads(data, **self.load_options)

@@ -3,6 +3,7 @@ import logging
 import signal
 
 from sprockets.mixins import mediatype
+from sprockets.mixins.mediatype import transcoders
 from tornado import ioloop, web
 import umsgpack
 
@@ -22,8 +23,8 @@ def make_application(**settings):
                                        encoding='utf-8')
     mediatype.add_binary_content_type(application, 'application/msgpack',
                                       umsgpack.packb, umsgpack.unpackb)
-    mediatype.add_text_content_type(application, 'application/json', 'utf-8',
-                                    json.dumps, json.loads)
+    mediatype.add_transcoder(application, 'application/json',
+                             transcoders.JSONTranscoder())
     return application
 
 
