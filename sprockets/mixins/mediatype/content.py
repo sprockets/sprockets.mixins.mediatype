@@ -1,12 +1,29 @@
 """
-sprockets.mixins.media_type
-===========================
+Content handling for Tornado.
+
+- :func:`.add_binary_content_type` register transcoders for a binary
+  content type
+- :func:`.add_text_content_type` register transcoders for a textual
+  content type
+- :class:`.ContentSettings` an instance of this is attached to
+  :class:`tornado.web.Application` to hold the content mapping
+  information for the application
+- :class:`.ContentMixin` attaches a :class:`.ContentSettings`
+  instance to the application and implements request decoding &
+  response encoding methods
+
+This module is the primary interface for this library.  It exposes
+functions for registering new content handlers and a mix-in that
+adds content handling methods to :class:`~tornado.web.RequestHandler`
+instances.
 
 """
 import logging
 
 from ietfparse import algorithms, errors, headers
 from tornado import escape, web
+
+from .transcoders import BinaryContentHandler, TextContentHandler
 
 
 logger = logging.getLogger(__name__)
@@ -108,7 +125,7 @@ def add_binary_content_type(application, content_type, pack, unpack):
 
     """
     settings = ContentSettings.from_application(application)
-    settings[content_type] = _BinaryContentHandler(content_type, pack, unpack)
+    settings[content_type] = BinaryContentHandler(content_type, pack, unpack)
 
 
 def add_text_content_type(application, content_type, default_encoding,
@@ -126,8 +143,8 @@ def add_text_content_type(application, content_type, default_encoding,
 
     """
     settings = ContentSettings.from_application(application)
-    settings[content_type] = _TextContentHandler(content_type, dumps, loads,
-                                                 default_encoding)
+    settings[content_type] = TextContentHandler(content_type, dumps, loads,
+                                                default_encoding)
 
 
 def set_default_content_type(application, content_type, encoding=None):
@@ -230,35 +247,3 @@ class ContentMixin(object):
         if set_content_type:
             self.set_header('Content-Type', content_type)
         self.write(data_bytes)
-
-
-class _BinaryContentHandler(object):
-
-    def __init__(self, content_type, pack, unpack):
-        self._pack = pack
-        self._unpack = unpack
-        self.content_type = content_type
-
-    def to_bytes(self, data_dict, encoding=None):
-        return self.content_type, self._pack(data_dict)
-
-    def from_bytes(self, data, encoding=None):
-        return self._unpack(data)
-
-
-class _TextContentHandler(object):
-
-    def __init__(self, content_type, dumps, loads, default_encoding):
-        self._dumps = dumps
-        self._loads = loads
-        self.content_type = content_type
-        self.default_encoding = default_encoding
-
-    def to_bytes(self, data_dict, encoding=None):
-        selected = encoding or self.default_encoding
-        content_type = '{0}; charset="{1}"'.format(self.content_type, selected)
-        dumped = self._dumps(escape.recursive_unicode(data_dict))
-        return content_type, dumped.encode(selected)
-
-    def from_bytes(self, data, encoding=None):
-        return self._loads(data.decode(encoding or self.default_encoding))
