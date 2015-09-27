@@ -1,7 +1,7 @@
 import json
 
 from tornado import testing
-import msgpack
+import umsgpack
 
 import examples
 
@@ -35,7 +35,7 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
                          'application/msgpack')
 
     def test_that_default_content_type_is_set_on_response(self):
-        response = self.fetch('/', method='POST', body=msgpack.packb('{}'),
+        response = self.fetch('/', method='POST', body=umsgpack.packb('{}'),
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'],
@@ -62,7 +62,7 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
                 'utf8': u'\u2731'
             }
         }
-        response = self.fetch('/', method='POST', body=msgpack.packb(body),
+        response = self.fetch('/', method='POST', body=umsgpack.packb(body),
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body.decode('utf-8')), body)

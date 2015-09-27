@@ -4,7 +4,7 @@ import signal
 
 from sprockets.mixins import mediatype
 from tornado import ioloop, web
-import msgpack
+import umsgpack
 
 
 class SimpleHandler(mediatype.ContentMixin, web.RequestHandler):
@@ -21,7 +21,7 @@ def make_application(**settings):
     mediatype.set_default_content_type(application, 'application/json',
                                        encoding='utf-8')
     mediatype.add_binary_content_type(application, 'application/msgpack',
-                                      msgpack.packb, msgpack.unpackb)
+                                      umsgpack.packb, umsgpack.unpackb)
     mediatype.add_text_content_type(application, 'application/json', 'utf-8',
                                     json.dumps, json.loads)
     return application
