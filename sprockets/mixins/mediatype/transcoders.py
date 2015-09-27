@@ -134,6 +134,8 @@ class JSONTranscoder(TextContentHandler):
     :param str default_encoding: the default text character set.
         The sensible default here is ``utf-8`` but you can override
         it if necessary.
+    :param dict loads_options: *kwargs* passed to :func:`json.loads`.
+        This is useful if you want to pass in a custom load hook.
 
     This calls :func:`json.dumps` and :func:`json.loads` passing the
     :meth:`load_object_hook` and :meth:`dump_default` to implement
@@ -161,7 +163,7 @@ class JSONTranscoder(TextContentHandler):
     """
 
     def __init__(self, content_type='application/json',
-                 default_encoding='utf-8'):
+                 default_encoding='utf-8', loads_options=None):
 
         super(JSONTranscoder, self).__init__(content_type, self.dumps,
                                              self.loads, default_encoding)
@@ -169,20 +171,7 @@ class JSONTranscoder(TextContentHandler):
             'default': self.dump_default,
             'separators': (',', ':'),
         }
-        self.load_options = {
-            'object_hook': self.load_object_hook,
-        }
-
-    def load_object_hook(self, obj):
-        """
-        Called with objects as they are decoded.
-
-        :param object obj: object that was decoded.  This is a
-            :class:`list` or :class:`dict`.
-        :returns: possibly modified version of `obj`
-
-        """
-        return obj
+        self.load_options = loads_options.copy() if loads_options else {}
 
     def dump_default(self, obj):
         """
