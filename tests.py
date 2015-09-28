@@ -59,6 +59,18 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         self.assertEqual(response.headers['Content-Type'],
                          'application/json; charset="utf-8"')
 
+    def test_that_accept_charset_is_honored(self):
+        body = [u'Hallo. Wie geht es lhnen diese sch\u00F6nen Tag?']
+        response = self.fetch(
+            '/', method='POST', body=json.dumps(body).encode('utf-8'),
+            headers={'Content-Type': 'application/json',
+                     'Accept': 'application/json',
+                     'Accept-Charset': 'iso-latin-1, latin1'})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-Type'],
+                         'application/json; charset="latin1"')
+        self.assertEqual(json.loads(response.body.decode('latin1')), body)
+
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
 

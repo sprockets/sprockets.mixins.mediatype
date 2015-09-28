@@ -20,6 +20,7 @@ adds content handling methods to :class:`~tornado.web.RequestHandler`
 instances.
 
 """
+import codecs
 import logging
 
 from ietfparse import algorithms, errors, headers
@@ -276,7 +277,19 @@ class ContentMixin(object):
         """
         settings = ContentSettings.from_application(self.application)
         handler = settings[self.get_response_content_type()]
-        content_type, data_bytes = handler.to_bytes(body)
+        encoding = None
+        if self.request.headers.get('Accept-Charset', None):
+            charsets = headers.parse_accept_charset(
+                self.request.headers['Accept-Charset'])
+            for charset in charsets:
+                try:
+                    codecs.lookup(charset)
+                    encoding = charset
+                    break
+                except LookupError:
+                    pass
+
+        content_type, data_bytes = handler.to_bytes(body, encoding=encoding)
         if set_content_type:
             self.set_header('Content-Type', content_type)
         self.write(data_bytes)

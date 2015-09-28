@@ -7,6 +7,7 @@ Version History
 - Add :class:`sprockets.mixins.mediatype.transcoders.JSONTranscoder`
 - Add :class:`sprockets.mixins.mediatype.transcoders.MsgPackTranscoder`
 - Content type parameters are now passed to transcoder ``from_bytes`` methods
+- Accept-Charset header is processed appropriately in response processing
 
 `1.0.4`_ (14 Sep 2015)
 ----------------------
