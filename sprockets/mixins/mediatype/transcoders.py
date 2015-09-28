@@ -63,12 +63,15 @@ class BinaryContentHandler(object):
         """
         return self.content_type, self._pack(inst_data)
 
-    def from_bytes(self, data_bytes, encoding=None):
+    def from_bytes(self, data_bytes, encoding=None, content_parameters=None):
         """
         Get an object from :class:`bytes`
 
         :param bytes data_bytes: stream of bytes to decode
         :param str encoding: ignored
+        :param dict content_parameters: optional :class:`dict` of
+            content type parameters from the :mailheader:`Content-Type`
+            header
         :returns: decoded :class:`object` instance
 
         """
@@ -120,7 +123,7 @@ class TextContentHandler(object):
         dumped = self._dumps(escape.recursive_unicode(data_dict))
         return content_type, dumped.encode(selected)
 
-    def from_bytes(self, data, encoding=None):
+    def from_bytes(self, data, encoding=None, content_parameters=None):
         """
         Get an object from :class:`bytes`
 
@@ -128,6 +131,9 @@ class TextContentHandler(object):
         :param str encoding: character set used to decode the incoming
             bytes before calling the ``loads`` function.  This defaults
             to :attr:`default_encoding`
+        :param dict content_parameters: optional :class:`dict` of
+            content type parameters from the :mailheader:`Content-Type`
+            header
         :returns: decoded :class:`object` instance
 
         """

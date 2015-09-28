@@ -255,7 +255,9 @@ class ContentMixin(object):
                                      content_type_header.content_subtype])
             try:
                 handler = settings[content_type]
-                self._request_body = handler.from_bytes(self.request.body)
+                self._request_body = handler.from_bytes(
+                    self.request.body,
+                    content_parameters=content_type_header.parameters)
 
             except KeyError:
                 raise web.HTTPError(415, 'cannot decode body of type %s',
