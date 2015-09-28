@@ -1,8 +1,8 @@
 Version History
 ===============
 
-`Next Release`_
----------------
+`1.0.5`_ (28 Sep 2015)
+----------------------
 - Add :func:`sprockets.mixins.mediatype.add_transcoder`
 - Add :class:`sprockets.mixins.mediatype.transcoders.JSONTranscoder`
 - Add :class:`sprockets.mixins.mediatype.transcoders.MsgPackTranscoder`
@@ -28,8 +28,9 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.4...master
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.5...master
 
+.. _1.0.5: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.4...1.0.5
 .. _1.0.4: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.3...1.0.4
 .. _1.0.3: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.2...1.0.3
 .. _1.0.2: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.1...1.0.2
