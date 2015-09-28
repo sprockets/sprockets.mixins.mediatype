@@ -114,3 +114,51 @@ class JSONTranscoderTests(unittest.TestCase):
         self.assertEqual(
             json_bytes.decode('ASCII'),
             '"{}"'.format(base64.b64encode(value).decode('ASCII')))
+
+
+class MsgPackTranscoderTest(unittest.TestCase):
+
+    def setUp(self):
+        super(MsgPackTranscoderTest, self).setUp()
+        self.transcoder = transcoders.MsgPackTranscoder()
+
+    def test_that_encoding_unrecognized_type_raises_type_error(self):
+        with self.assertRaises(TypeError):
+            self.transcoder.to_bytes(object())
+
+    def test_that_datetimes_encoded_as_iso8601(self):
+        value = datetime.datetime.utcnow()
+        _, packed = self.transcoder.to_bytes(value)
+        self.assertEqual(
+            packed, umsgpack.packb(value.strftime('%Y-%m-%dT%H:%M:%S.%f%z')))
+
+    def test_that_uuids_are_encoded_as_strings(self):
+        value = uuid.uuid4()
+        _, packed = self.transcoder.to_bytes(value)
+        self.assertEqual(packed, umsgpack.packb(str(value)))
+
+    def test_that_bytes_are_encoded_asis(self):
+        value = bytearray(range(0, 255))
+        _, packed = self.transcoder.to_bytes(value)
+        self.assertEqual(packed, umsgpack.packb(bytes(value)))
+
+    def test_that_complex_structures_are_packed_accordingly(self):
+        value = {
+            'list': ['containing', 'strings', 1234, 'and', True, None],
+            'set': set([1, 2, 3, (1, 2, 3)]),
+            'dict': {'one': 1, 2: 'two'},
+        }
+        _, packed = self.transcoder.to_bytes(value)
+
+        # sequences are ALWAYS represented as lists
+        value['set'] = [1, 2, 3, [1, 2, 3]]
+        self.assertEqual(umsgpack.unpackb(packed), value)
+
+    def test_that_deserialization_works_as_expected(self):
+        value = {
+            'list': ['containing', 'strings', 1234, 'and', True, None],
+            'set': [1, 2, 3, [1, 2, 3]],
+            'dict': {'one': 1, 2: 'two'},
+        }
+        _, packed = self.transcoder.to_bytes(value)
+        self.assertEqual(self.transcoder.unpackb(packed), value)
