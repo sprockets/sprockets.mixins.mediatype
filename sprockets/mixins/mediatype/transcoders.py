@@ -17,6 +17,7 @@ This module implements the transcoders.
 import base64
 import collections
 import json
+import sys
 import uuid
 
 from tornado import escape
@@ -201,7 +202,11 @@ class JSONTranscoder(TextContentHandler):
             return obj.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
         if isinstance(obj, uuid.UUID):
             return str(obj)
-        if isinstance(obj, (bytes, bytearray, memoryview)):
+        if sys.version_info <= (3, ) and isinstance(obj, buffer):
+            obj = bytes(obj)
+        if isinstance(obj, memoryview):
+            obj = obj.tobytes()
+        if isinstance(obj, (bytes, bytearray)):
             return base64.b64encode(obj).decode('ASCII')
 
         raise TypeError(
@@ -254,8 +259,12 @@ if umsgpack is not None:
 
         """
 
-        PACKABLE_TYPES = (bool, int, float, str, bytes)
-        """Types that umsgpack understands."""
+        if sys.version_info < (3, 0):
+            PACKABLE_TYPES = (bool, int, long, float, str, unicode, bytes)
+            """Types that umsgpack understands."""
+        else:
+            PACKABLE_TYPES = (bool, int, float, str, bytes)
+            """Types that umsgpack understands."""
 
         def __init__(self, content_type='application/msgpack'):
             super(MsgPackTranscoder, self).__init__(content_type, self.packb,
@@ -279,21 +288,28 @@ if umsgpack is not None:
 
             """
 
+            # these are supported out-of-the-box so just return them
             if datum is None or isinstance(datum, self.PACKABLE_TYPES):
                 return datum
 
+            # handle some standard library types
             if hasattr(datum, 'strftime'):
                 return datum.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
-
             if isinstance(datum, uuid.UUID):
                 return str(datum)
 
-            if isinstance(datum, (bytearray, memoryview)):
+            # raw binary data is still awkward
+            if sys.version_info < (3, 0) and isinstance(datum, buffer):
                 return bytes(datum)
+            if sys.version_info >= (2, 7):
+                if isinstance(datum, memoryview):
+                    return datum.tobytes()
+                if isinstance(datum, bytearray):
+                    return bytes(datum)
 
+            # now we can safely handle collection types RECURSIVELY
             if isinstance(datum, (collections.Sequence, collections.Set)):
                 return [self.normalize_datum(item) for item in datum]
-
             if isinstance(datum, collections.Mapping):
                 out = {}
                 for k, v in datum.items():

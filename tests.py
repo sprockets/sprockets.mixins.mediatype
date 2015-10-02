@@ -1,6 +1,7 @@
 import base64
 import datetime
 import json
+import sys
 import unittest
 import uuid
 
@@ -127,6 +128,21 @@ class JSONTranscoderTests(unittest.TestCase):
             json_bytes.decode('ASCII'),
             '"{}"'.format(base64.b64encode(value).decode('ASCII')))
 
+    def test_that_memory_is_base64_encoded(self):
+        value = bytearray(range(0, 255))
+        _, json_bytes = self.transcoder.to_bytes(memoryview(value))
+        self.assertEqual(
+            json_bytes.decode('ASCII'),
+            '"{}"'.format(base64.b64encode(value).decode('ASCII')))
+
+    @unittest.skipIf(sys.version_info >= (3, 0), 'python 2.x only')
+    def test_that_buffer_is_encoded_as_bytes(self):
+        value = bytearray(range(0, 255))
+        _, json_bytes = self.transcoder.to_bytes(buffer(value))
+        self.assertEqual(
+            json_bytes.decode('ASCII'),
+            '"{}"'.format(base64.b64encode(value).decode('ASCII')))
+
 
 class MsgPackTranscoderTest(unittest.TestCase):
 
@@ -154,6 +170,11 @@ class MsgPackTranscoderTest(unittest.TestCase):
         _, packed = self.transcoder.to_bytes(value)
         self.assertEqual(packed, umsgpack.packb(bytes(value)))
 
+    def test_that_memory_is_encoded_as_bytes(self):
+        value = bytearray(range(0, 255))
+        _, packed = self.transcoder.to_bytes(memoryview(value))
+        self.assertEqual(packed, umsgpack.packb(bytes(value)))
+
     def test_that_complex_structures_are_packed_accordingly(self):
         value = {
             'list': ['containing', 'strings', 1234, 'and', True, None],
@@ -174,3 +195,9 @@ class MsgPackTranscoderTest(unittest.TestCase):
         }
         _, packed = self.transcoder.to_bytes(value)
         self.assertEqual(self.transcoder.unpackb(packed), value)
+
+    @unittest.skipIf(sys.version_info >= (3, 0), 'python 2.x only')
+    def test_that_buffer_is_encoded_as_bytes(self):
+        value = bytearray(range(0, 255))
+        _, packed = self.transcoder.to_bytes(buffer(value))
+        self.assertEqual(packed, umsgpack.packb(bytes(value)))
