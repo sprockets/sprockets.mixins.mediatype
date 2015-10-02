@@ -1,9 +1,28 @@
+import base64
+import datetime
 import json
+import sys
+import unittest
+import uuid
 
 from tornado import testing
-import msgpack
+import umsgpack
 
+from sprockets.mixins.mediatype import transcoders
 import examples
+
+
+class UTC(datetime.tzinfo):
+    ZERO = datetime.timedelta(0)
+
+    def utcoffset(self, _):
+        return self.ZERO
+
+    def tzname(self, _):
+        return 'UTC'
+
+    def dst(self, _):
+        return self.ZERO
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
@@ -35,11 +54,23 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
                          'application/msgpack')
 
     def test_that_default_content_type_is_set_on_response(self):
-        response = self.fetch('/', method='POST', body=msgpack.packb('{}'),
+        response = self.fetch('/', method='POST', body=umsgpack.packb('{}'),
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'],
                          'application/json; charset="utf-8"')
+
+    def test_that_accept_charset_is_honored(self):
+        body = [u'Hallo. Wie geht es lhnen diese sch\u00F6nen Tag?']
+        response = self.fetch(
+            '/', method='POST', body=json.dumps(body).encode('utf-8'),
+            headers={'Content-Type': 'application/json',
+                     'Accept': 'application/json',
+                     'Accept-Charset': 'iso-latin-1, latin1'})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-Type'],
+                         'application/json; charset="latin1"')
+        self.assertEqual(json.loads(response.body.decode('latin1')), body)
 
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
@@ -62,7 +93,111 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
                 'utf8': u'\u2731'
             }
         }
-        response = self.fetch('/', method='POST', body=msgpack.packb(body),
+        response = self.fetch('/', method='POST', body=umsgpack.packb(body),
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body.decode('utf-8')), body)
+
+
+class JSONTranscoderTests(unittest.TestCase):
+
+    def setUp(self):
+        super(JSONTranscoderTests, self).setUp()
+        self.transcoder = transcoders.JSONTranscoder()
+
+    def test_that_encoding_unrecognized_type_raise_type_error(self):
+        with self.assertRaises(TypeError):
+            self.transcoder.to_bytes(object())
+
+    def test_that_datetimes_encoded_as_iso8601(self):
+        value = datetime.datetime.utcnow().replace(tzinfo=UTC())
+        _, json_bytes = self.transcoder.to_bytes(value)
+        self.assertEqual(
+            json_bytes,
+            value.strftime('"%Y-%m-%dT%H:%M:%S.%f%z"').encode('ASCII'))
+
+    def test_that_uuids_are_encoded_as_strings(self):
+        value = uuid.uuid4()
+        _, json_bytes = self.transcoder.to_bytes(value)
+        self.assertEqual(json_bytes, '"{}"'.format(value).encode('ASCII'))
+
+    def test_that_bytes_are_base64_encoded(self):
+        value = bytearray(range(0, 255))
+        _, json_bytes = self.transcoder.to_bytes(value)
+        self.assertEqual(
+            json_bytes.decode('ASCII'),
+            '"{}"'.format(base64.b64encode(value).decode('ASCII')))
+
+    def test_that_memory_is_base64_encoded(self):
+        value = bytearray(range(0, 255))
+        _, json_bytes = self.transcoder.to_bytes(memoryview(value))
+        self.assertEqual(
+            json_bytes.decode('ASCII'),
+            '"{}"'.format(base64.b64encode(value).decode('ASCII')))
+
+    @unittest.skipIf(sys.version_info >= (3, 0), 'python 2.x only')
+    def test_that_buffer_is_encoded_as_bytes(self):
+        value = bytearray(range(0, 255))
+        _, json_bytes = self.transcoder.to_bytes(buffer(value))
+        self.assertEqual(
+            json_bytes.decode('ASCII'),
+            '"{}"'.format(base64.b64encode(value).decode('ASCII')))
+
+
+class MsgPackTranscoderTest(unittest.TestCase):
+
+    def setUp(self):
+        super(MsgPackTranscoderTest, self).setUp()
+        self.transcoder = transcoders.MsgPackTranscoder()
+
+    def test_that_encoding_unrecognized_type_raises_type_error(self):
+        with self.assertRaises(TypeError):
+            self.transcoder.to_bytes(object())
+
+    def test_that_datetimes_encoded_as_iso8601(self):
+        value = datetime.datetime.utcnow()
+        _, packed = self.transcoder.to_bytes(value)
+        self.assertEqual(
+            packed, umsgpack.packb(value.strftime('%Y-%m-%dT%H:%M:%S.%f%z')))
+
+    def test_that_uuids_are_encoded_as_strings(self):
+        value = uuid.uuid4()
+        _, packed = self.transcoder.to_bytes(value)
+        self.assertEqual(packed, umsgpack.packb(str(value)))
+
+    def test_that_bytes_are_encoded_asis(self):
+        value = bytearray(range(0, 255))
+        _, packed = self.transcoder.to_bytes(value)
+        self.assertEqual(packed, umsgpack.packb(bytes(value)))
+
+    def test_that_memory_is_encoded_as_bytes(self):
+        value = bytearray(range(0, 255))
+        _, packed = self.transcoder.to_bytes(memoryview(value))
+        self.assertEqual(packed, umsgpack.packb(bytes(value)))
+
+    def test_that_complex_structures_are_packed_accordingly(self):
+        value = {
+            'list': ['containing', 'strings', 1234, 'and', True, None],
+            'set': set([1, 2, 3, (1, 2, 3)]),
+            'dict': {'one': 1, 2: 'two'},
+        }
+        _, packed = self.transcoder.to_bytes(value)
+
+        # sequences are ALWAYS represented as lists
+        value['set'] = [1, 2, 3, [1, 2, 3]]
+        self.assertEqual(umsgpack.unpackb(packed), value)
+
+    def test_that_deserialization_works_as_expected(self):
+        value = {
+            'list': ['containing', 'strings', 1234, 'and', True, None],
+            'set': [1, 2, 3, [1, 2, 3]],
+            'dict': {'one': 1, 2: 'two'},
+        }
+        _, packed = self.transcoder.to_bytes(value)
+        self.assertEqual(self.transcoder.unpackb(packed), value)
+
+    @unittest.skipIf(sys.version_info >= (3, 0), 'python 2.x only')
+    def test_that_buffer_is_encoded_as_bytes(self):
+        value = bytearray(range(0, 255))
+        _, packed = self.transcoder.to_bytes(buffer(value))
+        self.assertEqual(packed, umsgpack.packb(bytes(value)))

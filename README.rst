@@ -12,6 +12,8 @@ This mix-in adds two methods to a ``tornado.web.RequestHandler`` instance:
 - ``send_response(object)``: serializes the response into the content type
   requested by the ``Accept`` header.
 
+Function-based Transcoders
+--------------------------
 Support for a content types is enabled by calling either the
 ``add_binary_content_type`` or ``add_text_content_type`` function with the
 ``tornado.web.Application`` instance, the content type, encoding and decoding
@@ -57,6 +59,28 @@ instance that the mix-in uses to manipulate the request and response bodies.
 Based on the settings stored in the ``Application`` instance and the HTTP
 headers, the request and response data will be handled correctly or the
 appropriate HTTP exceptions will be raised.
+
+Instance-based Transcoders
+--------------------------
+You can also add support for specific content types by writing a class
+that implements a simple protocol of two methods:
+
+* ``to_bytes(data: object, encoding) -> bytes``
+* ``from_bytes(data: bytes, encoding) -> object``
+
+Transcoder instances are registered by calling the ``add_transcoder``
+function with the content type and a transcoder instance.  The instance
+will be reused for every request so be careful with internal state.
+
+This library includes the ``sprockets.mixins.mediatype.transcoders``
+module with sample transcoders for JSON and message pack messages.
+JSON support uses the ``json`` package from the Standard Library.
+Message Pack is implemented over the `u-msgpack-python`_ library and is
+only available when this library is installed.  You can easily install
+it by including the ``sprockets.mixins.mediatype[msgpack]`` setuptools
+dependency.
+
+.. _u-msgpack-python: https://pypi.python.org/pypi/u-msgpack-python
 
 .. |Documentation| image:: https://readthedocs.org/projects/sprocketsmixinsmedia-type/badge/?version=latest
    :target: https://sprocketsmixinsmedia-type.readthedocs.org/
