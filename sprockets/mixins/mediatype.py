@@ -6,7 +6,8 @@ sprockets.mixins.media_type
 import logging
 
 from ietfparse import algorithms, errors, headers
-from tornado import escape, web
+from tornado import web
+import coercion
 
 
 version_info = (1, 0, 4)
@@ -259,7 +260,7 @@ class _TextContentHandler(object):
     def to_bytes(self, data_dict, encoding=None):
         selected = encoding or self.default_encoding
         content_type = '{0}; charset="{1}"'.format(self.content_type, selected)
-        dumped = self._dumps(escape.recursive_unicode(data_dict))
+        dumped = self._dumps(coercion.normalize_collection(data_dict))
         return content_type, dumped.encode(selected)
 
     def from_bytes(self, data, encoding=None):

@@ -1,6 +1,11 @@
 Version History
 ===============
 
+`Next Release`_
+---------------
+- Replace ``tornado.escape.recursive_unicode`` with using the
+  `coercion`_ package instead
+
 `1.0.4`_ (14 Sep 2015)
 ----------------------
 - Support using the default_content_type in the settings if request does not
@@ -22,8 +27,12 @@ Version History
 ---------------------
 - Initial Release
 
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.0.4...master
+
 .. _1.0.4: https://github.com/sprockets/sprockets.http/compare/1.0.3...1.0.4
 .. _1.0.3: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.0.3
 .. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2
 .. _1.0.1: https://github.com/sprockets/sprockets.http/compare/1.0.0...1.0.1
 .. _1.0.0: https://github.com/sprockets/sprockets.http/compare/0.0.0...1.0.0
+
+.. _coercion: https://coercion.readthedocs.org/
