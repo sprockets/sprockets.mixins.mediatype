@@ -1,6 +1,11 @@
 Version History
 ===============
 
+`Next Release`_
+---------------
+- Repackage from a module into a package.  Distributing raw modules inside
+  of a namespace package is unreliable and questionably correct.
+
 `1.0.4`_ (14 Sep 2015)
 ----------------------
 - Support using the default_content_type in the settings if request does not
@@ -22,6 +27,7 @@ Version History
 ---------------------
 - Initial Release
 
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.0.4...HEAD
 .. _1.0.4: https://github.com/sprockets/sprockets.http/compare/1.0.3...1.0.4
 .. _1.0.3: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.0.3
 .. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2

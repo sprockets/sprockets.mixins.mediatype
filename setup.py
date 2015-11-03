@@ -4,6 +4,8 @@
 import os
 import setuptools
 
+from sprockets.mixins import mediatype
+
 
 def read_requirements(file_name):
     requirements = []
@@ -28,7 +30,7 @@ tests_require = read_requirements('testing.txt')
 
 setuptools.setup(
     name='sprockets.mixins.mediatype',
-    version='1.0.4',
+    version=mediatype.__version__,
     description='A mixin for reporting handling content-type/accept headers',
     long_description='\n' + open('README.rst').read(),
     url='https://github.com/sprockets/sprockets.mixins.media_type',
@@ -36,7 +38,7 @@ setuptools.setup(
     author_email='api@aweber.com',
     license='BSD',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
