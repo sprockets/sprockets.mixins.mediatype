@@ -7,6 +7,8 @@ Content handling for Tornado.
   content type
 - :func:`.add_text_content_type` register transcoders for a textual
   content type
+- :func:`.add_transcoder` register a custom transcoder instance
+  for a content type
 - :class:`.ContentSettings` an instance of this is attached to
   :class:`tornado.web.Application` to hold the content mapping
   information for the application
@@ -126,9 +128,8 @@ def add_binary_content_type(application, content_type, pack, unpack):
         dictionary.  ``unpack(bytes) -> dict``
 
     """
-    settings = ContentSettings.from_application(application)
-    settings[content_type] = handlers.BinaryContentHandler(
-        content_type, pack, unpack)
+    add_transcoder(application, content_type,
+                   handlers.BinaryContentHandler(content_type, pack, unpack))
 
 
 def add_text_content_type(application, content_type, default_encoding,
@@ -145,9 +146,38 @@ def add_text_content_type(application, content_type, default_encoding,
         ``loads(str, encoding:str) -> dict``
 
     """
+    add_transcoder(application, content_type,
+                   handlers.TextContentHandler(content_type, dumps, loads,
+                                               default_encoding))
+
+
+def add_transcoder(application, content_type, transcoder):
+    """
+    Register a transcoder for a specific content type.
+
+    :param tornado.web.Application application: the application to modify
+    :param str content_type: the content type to add
+    :param transcoder: object that translates between :class:`bytes` and
+        :class:`object` instances
+
+    The `transcoder` instance is required to implement the following
+    simple protocol:
+
+    .. method:: transcoder.to_bytes(inst_data, encoding=None) -> bytes
+
+       :param object inst_data: the object to encode
+       :param str encoding: character encoding to apply or :data:`None`
+       :returns: the encoded :class:`bytes` instance
+
+    .. method:: transcoder.from_bytes(data_bytes, encoding=None) -> object
+
+       :param bytes data_bytes: the :class:`bytes` instance to decode
+       :param str encoding: character encoding to use or :data:`None`
+       :returns: the decoded :class:`object` instance
+
+    """
     settings = ContentSettings.from_application(application)
-    settings[content_type] = handlers.TextContentHandler(
-        content_type, dumps, loads, default_encoding)
+    settings[content_type] = transcoder
 
 
 def set_default_content_type(application, content_type, encoding=None):

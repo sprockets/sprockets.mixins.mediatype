@@ -5,6 +5,7 @@ Version History
 ---------------
 - Repackage from a module into a package.  Distributing raw modules inside
   of a namespace package is unreliable and questionably correct.
+- Add :func:`sprockets.mixins.mediatype.content.add_transcoder`.
 
 `1.0.4`_ (14 Sep 2015)
 ----------------------

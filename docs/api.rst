@@ -15,5 +15,7 @@ Content Type Registration
 
 .. autofunction:: add_text_content_type
 
+.. autofunction:: add_transcoder
+
 .. autoclass:: ContentSettings
    :members:
