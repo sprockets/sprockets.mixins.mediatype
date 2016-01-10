@@ -19,3 +19,10 @@ Content Type Registration
 
 .. autoclass:: ContentSettings
    :members:
+
+Bundled Transcoders
+-------------------
+.. currentmodule:: sprockets.mixins.mediatype.transcoders
+
+.. autoclass:: JSONTranscoder
+   :members:
