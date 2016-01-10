@@ -9,7 +9,7 @@ extensions = ['sphinx.ext.autodoc',
 source_suffix = '.rst'
 master_doc = 'index'
 project = 'sprockets.mixins.mediatype'
-copyright = '2015, AWeber Communications'
+copyright = '2015-2016, AWeber Communications'
 release = __version__
 version = '.'.join(release.split('.')[0:1])
 
