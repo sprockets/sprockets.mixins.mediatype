@@ -9,7 +9,7 @@ import uuid
 from tornado import testing
 import msgpack
 
-from sprockets.mixins.mediatype import transcoders
+from sprockets.mixins.mediatype import content, transcoders
 import examples
 
 
@@ -134,3 +134,30 @@ class JSONTranscoderTests(unittest.TestCase):
     def test_that_unhandled_objects_raise_type_error(self):
         with self.assertRaises(TypeError):
             self.transcoder.dumps(object())
+
+
+class ContentSettingsTests(unittest.TestCase):
+
+    def test_that_from_application_creates_instance(self):
+        class Context(object):
+            pass
+
+        context = Context()
+        settings = content.ContentSettings.from_application(context)
+        self.assertIs(content.ContentSettings.from_application(context),
+                      settings)
+
+    def test_that_handler_listed_in_available_content_types(self):
+        settings = content.ContentSettings()
+        settings['application/json'] = object()
+        self.assertEqual(len(settings.available_content_types), 1)
+        self.assertEqual(settings.available_content_types[0].content_type,
+                         'application')
+        self.assertEqual(settings.available_content_types[0].content_subtype,
+                         'json')
+
+    def test_that_handler_is_not_overwritten(self):
+        settings = content.ContentSettings()
+        settings['application/json'] = handler = object()
+        settings['application/json'] = object()
+        self.assertIs(settings.get('application/json'), handler)

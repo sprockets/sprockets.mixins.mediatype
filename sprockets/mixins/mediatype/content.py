@@ -88,7 +88,7 @@ class ContentSettings(object):
     def __setitem__(self, content_type, handler):
         if content_type in self._handlers:
             logger.warning('handler for %s already set to %r',
-                           content_type, self._handers[content_type])
+                           content_type, self._handlers[content_type])
             return
 
         self._available_types.append(headers.parse_content_type(content_type))
