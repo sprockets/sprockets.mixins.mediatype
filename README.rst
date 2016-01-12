@@ -21,7 +21,7 @@ functions as parameters:
 
    import json
 
-   from sprockets.mixins import mediatype
+   from sprockets.mixins.mediatype import content
    from tornado import web
 
    def make_application():
@@ -29,9 +29,9 @@ functions as parameters:
            # insert your handlers here
        ])
 
-       mediatype.add_text_content_type(application,
-                                       'application/json', 'utf-8',
-                                       json.dumps, json.loads)
+       content.add_text_content_type(application,
+                                     'application/json', 'utf-8',
+                                     json.dumps, json.loads)
 
        return application
 
@@ -40,10 +40,10 @@ instance that the mix-in uses to manipulate the request and response bodies.
 
 .. code-block:: python
 
-   from sprockets.mixins import mediatype
+   from sprockets.mixins.mediatype import content
    from tornado import web
 
-   class SomeHandler(mediatype.ContentMixin, web.RequestHandler):
+   class SomeHandler(content.ContentMixin, web.RequestHandler):
        def get(self):
            self.send_response({'data': 'value'})
            self.finish()

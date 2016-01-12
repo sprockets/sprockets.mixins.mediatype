@@ -1,6 +1,6 @@
 API Documentation
 =================
-.. currentmodule:: sprockets.mixins.mediatype
+.. currentmodule:: sprockets.mixins.mediatype.content
 
 Content Type Handling
 ---------------------
