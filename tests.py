@@ -2,6 +2,7 @@ import base64
 import datetime
 import json
 import os
+import pickle
 import sys
 import unittest
 import uuid
@@ -9,7 +10,7 @@ import uuid
 from tornado import testing
 import msgpack
 
-from sprockets.mixins.mediatype import content, transcoders
+from sprockets.mixins.mediatype import content, handlers, transcoders
 import examples
 
 
@@ -24,6 +25,10 @@ class UTC(datetime.tzinfo):
 
     def tzname(self, dt):
         return 'UTC'
+
+
+class Context(object):
+    pass
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
@@ -161,3 +166,29 @@ class ContentSettingsTests(unittest.TestCase):
         settings['application/json'] = handler = object()
         settings['application/json'] = object()
         self.assertIs(settings.get('application/json'), handler)
+
+
+class ContentFunctionTests(unittest.TestCase):
+
+    def setUp(self):
+        super(ContentFunctionTests, self).setUp()
+        self.context = Context()
+
+    def test_that_add_binary_content_type_creates_binary_handler(self):
+        content.add_binary_content_type(self.context,
+                                        'application/vnd.python.pickle',
+                                        pickle.dumps, pickle.loads)
+        settings = content.ContentSettings.from_application(self.context)
+        transcoder = settings['application/vnd.python.pickle']
+        self.assertIsInstance(transcoder, handlers.BinaryContentHandler)
+        self.assertIs(transcoder._pack, pickle.dumps)
+        self.assertIs(transcoder._unpack, pickle.loads)
+
+    def test_that_add_text_content_type_creates_text_handler(self):
+        content.add_text_content_type(self.context, 'application/json', 'utf8',
+                                      json.dumps, json.loads)
+        settings = content.ContentSettings.from_application(self.context)
+        transcoder = settings['application/json']
+        self.assertIsInstance(transcoder, handlers.TextContentHandler)
+        self.assertIs(transcoder._dumps, json.dumps)
+        self.assertIs(transcoder._loads, json.loads)
