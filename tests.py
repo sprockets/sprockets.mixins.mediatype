@@ -8,7 +8,7 @@ import unittest
 import uuid
 
 from tornado import testing
-import msgpack
+import umsgpack
 
 from sprockets.mixins.mediatype import content, handlers, transcoders
 import examples
@@ -28,6 +28,7 @@ class UTC(datetime.tzinfo):
 
 
 class Context(object):
+    """Super simple class to call setattr on"""
     pass
 
 
@@ -60,7 +61,7 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
                          'application/msgpack')
 
     def test_that_default_content_type_is_set_on_response(self):
-        response = self.fetch('/', method='POST', body=msgpack.packb({}),
+        response = self.fetch('/', method='POST', body=umsgpack.packb({}),
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'],
@@ -87,7 +88,7 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
                 'utf8': u'\u2731'
             }
         }
-        response = self.fetch('/', method='POST', body=msgpack.packb(body),
+        response = self.fetch('/', method='POST', body=umsgpack.packb(body),
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body.decode('utf-8')), body)
@@ -144,8 +145,6 @@ class JSONTranscoderTests(unittest.TestCase):
 class ContentSettingsTests(unittest.TestCase):
 
     def test_that_from_application_creates_instance(self):
-        class Context(object):
-            pass
 
         context = Context()
         settings = content.ContentSettings.from_application(context)
@@ -192,3 +191,60 @@ class ContentFunctionTests(unittest.TestCase):
         self.assertIsInstance(transcoder, handlers.TextContentHandler)
         self.assertIs(transcoder._dumps, json.dumps)
         self.assertIs(transcoder._loads, json.loads)
+
+
+class MsgPackTranscoderTests(unittest.TestCase):
+
+    def setUp(self):
+        super(MsgPackTranscoderTests, self).setUp()
+        self.transcoder = transcoders.MsgPackTranscoder()
+
+    def test_that_strings_are_dumped_as_strings(self):
+        dumped = self.transcoder.packb(u'foo')
+        self.assertEqual(self.transcoder.unpackb(dumped), 'foo')
+        self.assertEqual(dumped, b'\xA3foo')
+
+    def test_that_none_is_packed_as_nil_byte(self):
+        self.assertEqual(self.transcoder.packb(None), b'\xC0')
+
+    def test_that_bools_are_dumped_appropriately(self):
+        self.assertEqual(self.transcoder.packb(False), b'\xC2')
+        self.assertEqual(self.transcoder.packb(True), b'\xC3')
+
+    def test_that_ints_are_packed_appropriately(self):
+        self.assertEqual(self.transcoder.packb((2 ** 7) - 1), b'\x7F')
+        self.assertEqual(self.transcoder.packb(2 ** 7), b'\xCC\x80')
+        self.assertEqual(self.transcoder.packb(2 ** 8), b'\xCD\x01\x00')
+        self.assertEqual(self.transcoder.packb(2 ** 16),
+                         b'\xCE\x00\x01\x00\x00')
+        self.assertEqual(self.transcoder.packb(2 ** 32),
+                         b'\xCF\x00\x00\x00\x01\x00\x00\x00\x00')
+
+    def test_that_negative_ints_are_packed_accordingly(self):
+        self.assertEqual(self.transcoder.packb(-(2 ** 0)), b'\xFF')
+        self.assertEqual(self.transcoder.packb(-(2 ** 5)), b'\xE0')
+        self.assertEqual(self.transcoder.packb(-(2 ** 7)), b'\xD0\x80')
+        self.assertEqual(self.transcoder.packb(-(2 ** 15)), b'\xD1\x80\x00')
+        self.assertEqual(self.transcoder.packb(-(2 ** 31)),
+                         b'\xD2\x80\x00\x00\x00')
+        self.assertEqual(self.transcoder.packb(-(2 ** 63)),
+                         b'\xD3\x80\x00\x00\x00\x00\x00\x00\x00')
+
+    def test_that_lists_are_treated_as_arrays(self):
+        dumped = self.transcoder.packb(list())
+        self.assertEqual(self.transcoder.unpackb(dumped), [])
+        self.assertEqual(dumped, b'\x90')
+
+    def test_that_tuples_are_treated_as_arrays(self):
+        dumped = self.transcoder.packb(tuple())
+        self.assertEqual(self.transcoder.unpackb(dumped), [])
+        self.assertEqual(dumped, b'\x90')
+
+    def test_that_sets_are_treated_as_arrays(self):
+        dumped = self.transcoder.packb(set())
+        self.assertEqual(self.transcoder.unpackb(dumped), [])
+        self.assertEqual(dumped, b'\x90')
+
+    def test_that_unhandled_objects_raise_type_error(self):
+        with self.assertRaises(TypeError):
+            self.transcoder.packb(object())

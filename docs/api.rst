@@ -26,3 +26,6 @@ Bundled Transcoders
 
 .. autoclass:: JSONTranscoder
    :members:
+
+.. autoclass:: MsgPackTranscoder
+   :members:

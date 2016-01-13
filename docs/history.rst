@@ -7,6 +7,7 @@ Version History
   of a namespace package is unreliable and questionably correct.
 - Add :func:`sprockets.mixins.mediatype.content.add_transcoder`.
 - Add :class:`sprockets.mixins.mediatype.transcoders.JSONTranscoder`
+- Add :class:`sprockets.mixins.mediatype.transcoders.MsgPackTranscoder`
 
 `1.0.4`_ (14 Sep 2015)
 ----------------------

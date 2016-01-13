@@ -2,11 +2,20 @@
 Bundled media type transcoders.
 
 - :class:`.JSONTranscoder` implements JSON encoding/decoding
+- :class:`.MsgPackTranscoder` implements msgpack encoding/decoding
 
 """
 import base64
 import json
+import sys
 import uuid
+
+import collections
+
+try:
+    import umsgpack
+except ImportError:
+    umsgpack = None
 
 from sprockets.mixins.mediatype import handlers
 
@@ -112,3 +121,117 @@ class JSONTranscoder(handlers.TextContentHandler):
         if isinstance(obj, (bytes, bytearray, memoryview)):
             return base64.b64encode(obj).decode('ASCII')
         raise TypeError('{!r} is not JSON serializable'.format(obj))
+
+
+class MsgPackTranscoder(handlers.BinaryContentHandler):
+    """
+    Msgpack Transcoder instance.
+
+    :param str content_type: the content type that this encoder instance
+        implements. If omitted, ``application/msgpack`` is used. This
+        is passed directly to the ``BinaryContentHandler`` initializer.
+
+    This transcoder uses the `umsgpack`_ library to encode and decode
+    objects according to the `msgpack`_ format.
+
+    .. _umsgpack: https://github.com/vsergeev/u-msgpack-python
+    .. _msgpack: http://msgpack.org/index.html
+
+    """
+    if sys.version_info[0] < 3:
+        PACKABLE_TYPES = (bool, int, float, long)
+    else:
+        PACKABLE_TYPES = (bool, int, float)
+
+    def __init__(self, content_type='application/msgpack'):
+        if umsgpack is None:
+            raise RuntimeError('Cannot import MsgPackTranscoder, '
+                               'umsgpack is not available')
+
+        super(MsgPackTranscoder, self).__init__(content_type, self.packb,
+                                                self.unpackb)
+
+    def packb(self, data):
+        """Pack `data` into a :class:`bytes` instance."""
+        return umsgpack.packb(self.normalize_datum(data))
+
+    def unpackb(self, data):
+        """Unpack a :class:`object` from a :class:`bytes` instance."""
+        return umsgpack.unpackb(data)
+
+    def normalize_datum(self, datum):
+        """
+        Convert `datum` into something that umsgpack likes.
+
+        :param datum: something that we want to process with umsgpack
+        :return: a packable version of `datum`
+        :raises TypeError: if `datum` cannot be packed
+
+        This message is called by :meth:`.packb` to recursively normalize
+        an input value before passing it to :func:`umsgpack.packb`.  Values
+        are normalized according to the following table.
+
+        +-------------------------------+-------------------------------+
+        | **Value**                     | **MsgPack Family**            |
+        +-------------------------------+-------------------------------+
+        | :data:`None`                  | `nil byte`_ (0xC0)            |
+        +-------------------------------+-------------------------------+
+        | :data:`True`                  | `true byte`_ (0xC3)           |
+        +-------------------------------+-------------------------------+
+        | :data:`False`                 | `false byte`_ (0xC2)          |
+        +-------------------------------+-------------------------------+
+        | :class:`int`                  | `integer family`_             |
+        +-------------------------------+-------------------------------+
+        | :class:`float`                | `float family`_               |
+        +-------------------------------+-------------------------------+
+        | String                        | `str family`_                 |
+        +-------------------------------+-------------------------------+
+        | :class:`collections.Sequence` | `array family`_               |
+        +-------------------------------+-------------------------------+
+        | :class:`collections.Set`      | `array family`_               |
+        +-------------------------------+-------------------------------+
+        | :class:`collections.Mapping`  | `map family`_                 |
+        +-------------------------------+-------------------------------+
+
+        .. _nil byte: https://github.com/msgpack/msgpack/blob/
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
+        .. _true byte: https://github.com/msgpack/msgpack/blob/
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#bool-format-family
+        .. _false byte: https://github.com/msgpack/msgpack/blob/
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#bool-format-family
+        .. _integer family: https://github.com/msgpack/msgpack/blob/
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#int-format-family
+        .. _float family: https://github.com/msgpack/msgpack/blob/
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#float-format-family
+        .. _str family: https://github.com/msgpack/msgpack/blob/
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#str-format-family
+        .. _array family: https://github.com/msgpack/msgpack/blob/
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#array-format-family
+        .. _map family: https://github.com/msgpack/msgpack/blob/
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md
+           #mapping-format-family
+
+        """
+        if datum is None:
+            return datum
+
+        if isinstance(datum, self.PACKABLE_TYPES):
+            return datum
+
+        if isinstance(datum, str):
+            return datum
+
+        if sys.version_info[0] < 3 and isinstance(datum, unicode):
+            return datum
+
+        if isinstance(datum, (collections.Sequence, collections.Set)):
+            return [self.normalize_datum(item) for item in datum]
+
+        if isinstance(datum, collections.Mapping):
+            out = {}
+            for k, v in datum.items():
+                out[k] = self.normalize_datum(v)
+            return out
+
+        raise TypeError(
+            '{} is not msgpackable'.format(datum.__class__.__name__))

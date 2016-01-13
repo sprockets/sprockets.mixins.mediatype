@@ -3,7 +3,6 @@ import signal
 
 from sprockets.mixins.mediatype import content, transcoders
 from tornado import ioloop, web
-import msgpack
 
 
 class SimpleHandler(content.ContentMixin, web.RequestHandler):
@@ -19,8 +18,8 @@ def make_application(**settings):
     application = web.Application([web.url(r'/', SimpleHandler)], **settings)
     content.set_default_content_type(application, 'application/json',
                                      encoding='utf-8')
-    content.add_binary_content_type(application, 'application/msgpack',
-                                    msgpack.packb, msgpack.unpackb)
+    content.add_transcoder(application, 'application/msgpack',
+                           transcoders.MsgPackTranscoder())
     content.add_transcoder(application, 'application/json',
                            transcoders.JSONTranscoder())
     return application
