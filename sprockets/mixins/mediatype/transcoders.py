@@ -186,6 +186,12 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-------------------------------+-------------------------------+
         | String                        | `str family`_                 |
         +-------------------------------+-------------------------------+
+        | :class:`bytes`                | `bin family`_                 |
+        +-------------------------------+-------------------------------+
+        | :class:`bytearray`            | `bin family`_                 |
+        +-------------------------------+-------------------------------+
+        | :class:`memoryview`           | `bin family`_                 |
+        +-------------------------------+-------------------------------+
         | :class:`collections.Sequence` | `array family`_               |
         +-------------------------------+-------------------------------+
         | :class:`collections.Set`      | `array family`_               |
@@ -223,16 +229,26 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         if isinstance(datum, uuid.UUID):
             datum = str(datum)
 
+        if isinstance(datum, bytearray):
+            datum = bytes(datum)
+
+        if isinstance(datum, memoryview):
+            datum = datum.tobytes()
+
         if hasattr(datum, 'isoformat'):
             datum = datum.isoformat()
 
-        if isinstance(datum, bytes):
-            datum = datum.decode('utf-8')
-
-        if isinstance(datum, str):
+        if sys.version_info[0] < 3 and isinstance(datum, (str, unicode)):
+            if isinstance(datum, str):
+                # try to decode this into a string to make the common
+                # case work.  If we fail, then send along the bytes.
+                try:
+                    datum = datum.decode('utf-8')
+                except UnicodeDecodeError:
+                    pass
             return datum
 
-        if sys.version_info[0] < 3 and isinstance(datum, unicode):
+        if isinstance(datum, (bytes, str)):
             return datum
 
         if isinstance(datum, (collections.Sequence, collections.Set)):

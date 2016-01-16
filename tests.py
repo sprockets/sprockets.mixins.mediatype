@@ -48,6 +48,18 @@ def pack_string(obj):
     return prefix + payload
 
 
+def pack_bytes(payload):
+    """Optimally pack a byte string according to msgpack format"""
+    l = len(payload)
+    if l < (2 ** 8):
+        prefix = struct.pack('BB', 0xC4, l)
+    elif l < (2 ** 16):
+        prefix = struct.pack('>BH', 0xC5, l)
+    else:
+        prefix = struct.pack('>BI', 0xC6, l)
+    return prefix + payload
+
+
 class SendResponseTests(testing.AsyncHTTPTestCase):
 
     def get_app(self):
@@ -283,3 +295,21 @@ class MsgPackTranscoderTests(unittest.TestCase):
         dumped = self.transcoder.packb(now)
         self.assertEqual(self.transcoder.unpackb(dumped), now.isoformat())
         self.assertEqual(dumped, pack_string(now.isoformat()))
+
+    def test_that_bytes_are_sent_as_bytes(self):
+        data = bytes(os.urandom(127))
+        dumped = self.transcoder.packb(data)
+        self.assertEqual(self.transcoder.unpackb(dumped), data)
+        self.assertEqual(dumped, pack_bytes(data))
+
+    def test_that_bytearrays_are_sent_as_bytes(self):
+        data = bytearray(os.urandom(127))
+        dumped = self.transcoder.packb(data)
+        self.assertEqual(self.transcoder.unpackb(dumped), data)
+        self.assertEqual(dumped, pack_bytes(data))
+
+    def test_that_memoryviews_are_sent_as_bytes(self):
+        data = memoryview(os.urandom(127))
+        dumped = self.transcoder.packb(data)
+        self.assertEqual(self.transcoder.unpackb(dumped), data)
+        self.assertEqual(dumped, pack_bytes(data.tobytes()))
