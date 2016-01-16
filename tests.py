@@ -313,3 +313,9 @@ class MsgPackTranscoderTests(unittest.TestCase):
         dumped = self.transcoder.packb(data)
         self.assertEqual(self.transcoder.unpackb(dumped), data)
         self.assertEqual(dumped, pack_bytes(data.tobytes()))
+
+    def test_that_utf8_values_can_be_forced_to_bytes(self):
+        data = b'a ascii value'
+        dumped = self.transcoder.packb(transcoders.BinaryWrapper(data))
+        self.assertEqual(self.transcoder.unpackb(dumped), data)
+        self.assertEqual(dumped, pack_bytes(data))

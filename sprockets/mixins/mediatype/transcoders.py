@@ -20,6 +20,28 @@ except ImportError:
 from sprockets.mixins.mediatype import handlers
 
 
+class BinaryWrapper(bytes):
+    """
+    Ensures that a Python 2 ``str`` is treated as binary.
+
+    Since :class:`bytes` is a synonym for :class:`str` in Python 2,
+    you cannot distinguish between something that should be binary
+    and something that should be encoded as a string.  This is a
+    problem in formats such as `msgpack`_ where binary data and
+    strings are encoded differently.  The :class:`MsgPackTranscoder`
+    accomodates this by trying to UTF-8 encode a :class:`str` instance
+    and falling back to binary encoding if the transcode fails.
+
+    You can avoid this by wrapping binary content in an instance of
+    this class.  The transcoder will then treat it as a binary payload
+    instead of trying to detect whether it is a string or not.
+
+    .. _msgpack: http://msgpack.org
+
+    """
+    pass
+
+
 class JSONTranscoder(handlers.TextContentHandler):
     """
     JSON transcoder instance.
@@ -184,13 +206,15 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-------------------------------+-------------------------------+
         | :class:`float`                | `float family`_               |
         +-------------------------------+-------------------------------+
-        | String                        | `str family`_                 |
+        | String (see note)             | `str family`_                 |
         +-------------------------------+-------------------------------+
         | :class:`bytes`                | `bin family`_                 |
         +-------------------------------+-------------------------------+
         | :class:`bytearray`            | `bin family`_                 |
         +-------------------------------+-------------------------------+
         | :class:`memoryview`           | `bin family`_                 |
+        +-------------------------------+-------------------------------+
+        | :class:`.BinaryWrapper`       | `bin family`_                 |
         +-------------------------------+-------------------------------+
         | :class:`collections.Sequence` | `array family`_               |
         +-------------------------------+-------------------------------+
@@ -200,6 +224,19 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-------------------------------+-------------------------------+
         | :class:`uuid.UUID`            | Converted to String           |
         +-------------------------------+-------------------------------+
+
+        .. note::
+
+           :class:`str` and :class:`bytes` are the same before Python 3.
+           If you want a value to be treated as a binary value, then you
+           should wrap it in :class:`.BinaryWrapper` if there is any
+           chance of running under Python 2.7.
+
+           The processing of :class:`str` in Python 2.x attempts to
+           encode the string as a UTF-8 stream.  If the ``encode`` succeeds,
+           then the string is encoded according to the `str family`_.
+           If ``encode`` fails, then the string is encoded according to
+           the `bin family`_ .
 
         .. _nil byte: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
@@ -239,7 +276,7 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
             datum = datum.isoformat()
 
         if sys.version_info[0] < 3 and isinstance(datum, (str, unicode)):
-            if isinstance(datum, str):
+            if isinstance(datum, str) and not isinstance(datum, BinaryWrapper):
                 # try to decode this into a string to make the common
                 # case work.  If we fail, then send along the bytes.
                 try:
