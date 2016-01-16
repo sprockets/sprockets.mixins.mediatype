@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import pickle
+import struct
 import sys
 import unittest
 import uuid
@@ -30,6 +31,21 @@ class UTC(datetime.tzinfo):
 class Context(object):
     """Super simple class to call setattr on"""
     pass
+
+
+def pack_string(obj):
+    """Optimally pack a string according to msgpack format"""
+    payload = str(obj).encode('ASCII')
+    l = len(payload)
+    if l < (2 ** 5):
+        prefix = struct.pack('B', 0b10100000 | l)
+    elif l < (2 ** 8):
+        prefix = struct.pack('BB', 0xD9, l)
+    elif l < (2 ** 16):
+        prefix = struct.pack('>BH', 0xDA, l)
+    else:
+        prefix = struct.pack('>BI', 0xDB, l)
+    return prefix + payload
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
@@ -202,7 +218,7 @@ class MsgPackTranscoderTests(unittest.TestCase):
     def test_that_strings_are_dumped_as_strings(self):
         dumped = self.transcoder.packb(u'foo')
         self.assertEqual(self.transcoder.unpackb(dumped), 'foo')
-        self.assertEqual(dumped, b'\xA3foo')
+        self.assertEqual(dumped, pack_string('foo'))
 
     def test_that_none_is_packed_as_nil_byte(self):
         self.assertEqual(self.transcoder.packb(None), b'\xC0')
@@ -248,3 +264,22 @@ class MsgPackTranscoderTests(unittest.TestCase):
     def test_that_unhandled_objects_raise_type_error(self):
         with self.assertRaises(TypeError):
             self.transcoder.packb(object())
+
+    def test_that_uuids_are_dumped_as_strings(self):
+        uid = uuid.uuid4()
+        dumped = self.transcoder.packb(uid)
+        self.assertEqual(self.transcoder.unpackb(dumped), str(uid))
+        self.assertEqual(dumped, pack_string(uid))
+
+    def test_that_datetimes_are_dumped_in_isoformat(self):
+        now = datetime.datetime.now()
+        dumped = self.transcoder.packb(now)
+        self.assertEqual(self.transcoder.unpackb(dumped), now.isoformat())
+        self.assertEqual(dumped, pack_string(now.isoformat()))
+
+    def test_that_tzaware_datetimes_include_tzoffset(self):
+        now = datetime.datetime.now().replace(tzinfo=UTC())
+        self.assertTrue(now.isoformat().endswith('+00:00'))
+        dumped = self.transcoder.packb(now)
+        self.assertEqual(self.transcoder.unpackb(dumped), now.isoformat())
+        self.assertEqual(dumped, pack_string(now.isoformat()))

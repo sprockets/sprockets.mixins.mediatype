@@ -192,6 +192,8 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-------------------------------+-------------------------------+
         | :class:`collections.Mapping`  | `map family`_                 |
         +-------------------------------+-------------------------------+
+        | :class:`uuid.UUID`            | Converted to String           |
+        +-------------------------------+-------------------------------+
 
         .. _nil byte: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
@@ -217,6 +219,15 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
 
         if isinstance(datum, self.PACKABLE_TYPES):
             return datum
+
+        if isinstance(datum, uuid.UUID):
+            datum = str(datum)
+
+        if hasattr(datum, 'isoformat'):
+            datum = datum.isoformat()
+
+        if isinstance(datum, bytes):
+            datum = datum.decode('utf-8')
 
         if isinstance(datum, str):
             return datum
