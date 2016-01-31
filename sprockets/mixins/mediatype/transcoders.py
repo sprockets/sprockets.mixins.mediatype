@@ -27,7 +27,7 @@ class BinaryWrapper(bytes):
     Since :class:`bytes` is a synonym for :class:`str` in Python 2,
     you cannot distinguish between something that should be binary
     and something that should be encoded as a string.  This is a
-    problem in formats such as `msgpack`_ where binary data and
+    problem in formats `such as msgpack`_ where binary data and
     strings are encoded differently.  The :class:`MsgPackTranscoder`
     accomodates this by trying to UTF-8 encode a :class:`str` instance
     and falling back to binary encoding if the transcode fails.
@@ -36,7 +36,7 @@ class BinaryWrapper(bytes):
     this class.  The transcoder will then treat it as a binary payload
     instead of trying to detect whether it is a string or not.
 
-    .. _msgpack: http://msgpack.org
+    .. _such as msgpack: http://msgpack.org
 
     """
     pass
@@ -154,10 +154,10 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         is passed directly to the ``BinaryContentHandler`` initializer.
 
     This transcoder uses the `umsgpack`_ library to encode and decode
-    objects according to the `msgpack`_ format.
+    objects according to the `msgpack format`_.
 
     .. _umsgpack: https://github.com/vsergeev/u-msgpack-python
-    .. _msgpack: http://msgpack.org/index.html
+    .. _msgpack format: http://msgpack.org/index.html
 
     """
     if sys.version_info[0] < 3:
@@ -255,6 +255,8 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         .. _map family: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md
            #mapping-format-family
+        .. _bin family: https://github.com/msgpack/msgpack/blob/
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#bin-format-family
 
         """
         if datum is None:
