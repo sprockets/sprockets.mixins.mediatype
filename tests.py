@@ -240,6 +240,14 @@ class ContentFunctionTests(unittest.TestCase):
         self.assertIs(transcoder._dumps, json.dumps)
         self.assertIs(transcoder._loads, json.loads)
 
+    def test_that_add_text_content_type_discards_charset_parameter(self):
+        content.add_text_content_type(self.context,
+                                      'application/json;charset=UTF-8', 'utf8',
+                                      json.dumps, json.loads)
+        settings = content.ContentSettings.from_application(self.context)
+        transcoder = settings['application/json']
+        self.assertIsInstance(transcoder, handlers.TextContentHandler)
+
 
 class MsgPackTranscoderTests(unittest.TestCase):
 

@@ -148,9 +148,15 @@ def add_text_content_type(application, content_type, default_encoding,
     :param loads: function that loads a dictionary from a string.
         ``loads(str, encoding:str) -> dict``
 
+    Note that the ``charset`` parameter is stripped from `content_type`
+    if it is present.
+
     """
-    add_transcoder(application, content_type,
-                   handlers.TextContentHandler(content_type, dumps, loads,
+    parsed = headers.parse_content_type(content_type)
+    parsed.parameters.pop('charset', None)
+    normalized = str(parsed)
+    add_transcoder(application, normalized,
+                   handlers.TextContentHandler(normalized, dumps, loads,
                                                default_encoding))
 
 
