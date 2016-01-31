@@ -83,15 +83,18 @@ class ContentSettings(object):
         self.default_encoding = None
 
     def __getitem__(self, content_type):
-        return self._handlers[content_type]
+        parsed = headers.parse_content_type(content_type)
+        return self._handlers[str(parsed)]
 
     def __setitem__(self, content_type, handler):
+        parsed = headers.parse_content_type(content_type)
+        content_type = str(parsed)
         if content_type in self._handlers:
             logger.warning('handler for %s already set to %r',
                            content_type, self._handlers[content_type])
             return
 
-        self._available_types.append(headers.parse_content_type(content_type))
+        self._available_types.append(parsed)
         self._handlers[content_type] = handler
 
     def get(self, content_type, default=None):

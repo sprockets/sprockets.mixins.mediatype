@@ -194,6 +194,26 @@ class ContentSettingsTests(unittest.TestCase):
         settings['application/json'] = object()
         self.assertIs(settings.get('application/json'), handler)
 
+    def test_that_registered_content_types_are_normalized(self):
+        settings = content.ContentSettings()
+        handler = object()
+        settings['application/json; VerSion=foo; type=WhatEver'] = handler
+        self.assertIs(settings['application/json; type=whatever; version=foo'],
+                      handler)
+        self.assertIn('application/json; type=whatever; version=foo',
+                      (str(c) for c in settings.available_content_types))
+
+    def test_that_normalized_content_types_do_not_overwrite(self):
+        settings = content.ContentSettings()
+        settings['application/json; charset=UTF-8'] = handler = object()
+        settings['application/json; charset=utf-8'] = object()
+        self.assertEqual(len(settings.available_content_types), 1)
+        self.assertEqual(settings.available_content_types[0].content_type,
+                         'application')
+        self.assertEqual(settings.available_content_types[0].content_subtype,
+                         'json')
+        self.assertEqual(settings['application/json; charset=utf-8'], handler)
+
 
 class ContentFunctionTests(unittest.TestCase):
 
