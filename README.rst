@@ -52,8 +52,8 @@ types:
            # insert your handlers here
        ])
 
-       content.add_transcoder(application, 'application/json',
-                              transcoders.JSONTranscoder())
+       content.add_transcoder(application, transcoders.JSONTranscoder(),
+                              'application/json')
 
        return application
 

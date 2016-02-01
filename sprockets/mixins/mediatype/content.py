@@ -131,8 +131,9 @@ def add_binary_content_type(application, content_type, pack, unpack):
         dictionary.  ``unpack(bytes) -> dict``
 
     """
-    add_transcoder(application, content_type,
-                   handlers.BinaryContentHandler(content_type, pack, unpack))
+    add_transcoder(application,
+                   handlers.BinaryContentHandler(content_type, pack, unpack),
+                   content_type)
 
 
 def add_text_content_type(application, content_type, default_encoding,
@@ -155,19 +156,20 @@ def add_text_content_type(application, content_type, default_encoding,
     parsed = headers.parse_content_type(content_type)
     parsed.parameters.pop('charset', None)
     normalized = str(parsed)
-    add_transcoder(application, normalized,
+    add_transcoder(application,
                    handlers.TextContentHandler(normalized, dumps, loads,
-                                               default_encoding))
+                                               default_encoding),
+                   normalized)
 
 
-def add_transcoder(application, content_type, transcoder):
+def add_transcoder(application, transcoder, content_type):
     """
     Register a transcoder for a specific content type.
 
     :param tornado.web.Application application: the application to modify
-    :param str content_type: the content type to add
     :param transcoder: object that translates between :class:`bytes` and
         :class:`object` instances
+    :param str content_type: the content type to add
 
     The `transcoder` instance is required to implement the following
     simple protocol:
