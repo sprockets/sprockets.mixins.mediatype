@@ -132,8 +132,7 @@ def add_binary_content_type(application, content_type, pack, unpack):
 
     """
     add_transcoder(application,
-                   handlers.BinaryContentHandler(content_type, pack, unpack),
-                   content_type)
+                   handlers.BinaryContentHandler(content_type, pack, unpack))
 
 
 def add_text_content_type(application, content_type, default_encoding,
@@ -158,21 +157,27 @@ def add_text_content_type(application, content_type, default_encoding,
     normalized = str(parsed)
     add_transcoder(application,
                    handlers.TextContentHandler(normalized, dumps, loads,
-                                               default_encoding),
-                   normalized)
+                                               default_encoding))
 
 
-def add_transcoder(application, transcoder, content_type):
+def add_transcoder(application, transcoder, content_type=None):
     """
     Register a transcoder for a specific content type.
 
     :param tornado.web.Application application: the application to modify
     :param transcoder: object that translates between :class:`bytes` and
         :class:`object` instances
-    :param str content_type: the content type to add
+    :param str content_type: the content type to add.  If this is
+        unspecified or :data:`None`, then the transcoder's ``content_type``
+        attribute is used.
 
     The `transcoder` instance is required to implement the following
     simple protocol:
+
+    .. attribute:: transcoder.content_type
+
+       :class:`str` that identifies the MIME type that the transcoder
+       implements.
 
     .. method:: transcoder.to_bytes(inst_data, encoding=None) -> bytes
 
@@ -188,7 +193,7 @@ def add_transcoder(application, transcoder, content_type):
 
     """
     settings = ContentSettings.from_application(application)
-    settings[content_type] = transcoder
+    settings[content_type or transcoder.content_type] = transcoder
 
 
 def set_default_content_type(application, content_type, encoding=None):

@@ -18,10 +18,8 @@ def make_application(**settings):
     application = web.Application([web.url(r'/', SimpleHandler)], **settings)
     content.set_default_content_type(application, 'application/json',
                                      encoding='utf-8')
-    content.add_transcoder(application, transcoders.MsgPackTranscoder(),
-                           content_type='application/msgpack')
-    content.add_transcoder(application, transcoders.JSONTranscoder(),
-                           content_type='application/json')
+    content.add_transcoder(application, transcoders.MsgPackTranscoder())
+    content.add_transcoder(application, transcoders.JSONTranscoder())
     return application
 
 
