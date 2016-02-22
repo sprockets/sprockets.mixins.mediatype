@@ -7,6 +7,8 @@ Content handling for Tornado.
   content type
 - :func:`.add_text_content_type` register transcoders for a textual
   content type
+- :func:`.add_transcoder` register a custom transcoder instance
+  for a content type
 - :class:`.ContentSettings` an instance of this is attached to
   :class:`tornado.web.Application` to hold the content mapping
   information for the application
@@ -81,15 +83,18 @@ class ContentSettings(object):
         self.default_encoding = None
 
     def __getitem__(self, content_type):
-        return self._handlers[content_type]
+        parsed = headers.parse_content_type(content_type)
+        return self._handlers[str(parsed)]
 
     def __setitem__(self, content_type, handler):
+        parsed = headers.parse_content_type(content_type)
+        content_type = str(parsed)
         if content_type in self._handlers:
             logger.warning('handler for %s already set to %r',
-                           content_type, self._handers[content_type])
+                           content_type, self._handlers[content_type])
             return
 
-        self._available_types.append(headers.parse_content_type(content_type))
+        self._available_types.append(parsed)
         self._handlers[content_type] = handler
 
     def get(self, content_type, default=None):
@@ -126,9 +131,8 @@ def add_binary_content_type(application, content_type, pack, unpack):
         dictionary.  ``unpack(bytes) -> dict``
 
     """
-    settings = ContentSettings.from_application(application)
-    settings[content_type] = handlers.BinaryContentHandler(
-        content_type, pack, unpack)
+    add_transcoder(application,
+                   handlers.BinaryContentHandler(content_type, pack, unpack))
 
 
 def add_text_content_type(application, content_type, default_encoding,
@@ -144,10 +148,52 @@ def add_text_content_type(application, content_type, default_encoding,
     :param loads: function that loads a dictionary from a string.
         ``loads(str, encoding:str) -> dict``
 
+    Note that the ``charset`` parameter is stripped from `content_type`
+    if it is present.
+
+    """
+    parsed = headers.parse_content_type(content_type)
+    parsed.parameters.pop('charset', None)
+    normalized = str(parsed)
+    add_transcoder(application,
+                   handlers.TextContentHandler(normalized, dumps, loads,
+                                               default_encoding))
+
+
+def add_transcoder(application, transcoder, content_type=None):
+    """
+    Register a transcoder for a specific content type.
+
+    :param tornado.web.Application application: the application to modify
+    :param transcoder: object that translates between :class:`bytes` and
+        :class:`object` instances
+    :param str content_type: the content type to add.  If this is
+        unspecified or :data:`None`, then the transcoder's ``content_type``
+        attribute is used.
+
+    The `transcoder` instance is required to implement the following
+    simple protocol:
+
+    .. attribute:: transcoder.content_type
+
+       :class:`str` that identifies the MIME type that the transcoder
+       implements.
+
+    .. method:: transcoder.to_bytes(inst_data, encoding=None) -> bytes
+
+       :param object inst_data: the object to encode
+       :param str encoding: character encoding to apply or :data:`None`
+       :returns: the encoded :class:`bytes` instance
+
+    .. method:: transcoder.from_bytes(data_bytes, encoding=None) -> object
+
+       :param bytes data_bytes: the :class:`bytes` instance to decode
+       :param str encoding: character encoding to use or :data:`None`
+       :returns: the decoded :class:`object` instance
+
     """
     settings = ContentSettings.from_application(application)
-    settings[content_type] = handlers.TextContentHandler(
-        content_type, dumps, loads, default_encoding)
+    settings[content_type or transcoder.content_type] = transcoder
 
 
 def set_default_content_type(application, content_type, encoding=None):

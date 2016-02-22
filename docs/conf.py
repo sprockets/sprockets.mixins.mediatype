@@ -31,7 +31,7 @@ html_theme_options = {
 }
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/', None),
+    'python': ('https://docs.python.org/3', None),
     'requests': ('https://requests.readthedocs.org/en/latest/', None),
     'sprockets': ('https://sprockets.readthedocs.org/en/latest/', None),
     'tornado': ('http://tornadoweb.org/en/latest/', None),
