@@ -121,6 +121,14 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body.decode('utf-8')), body)
 
+    def test_that_invalid_data_returns_400(self):
+        response = self.fetch(
+            '/', method='POST', headers={'Content-Type': 'application/json'},
+            body=('<?xml version="1.0"?><methodCall><methodName>echo'
+                  '</methodName><params><param><value><str>Hi</str></value>'
+                  '</param></params></methodCall>').encode('utf-8'))
+        self.assertEqual(response.code, 400)
+
 
 class JSONTranscoderTests(unittest.TestCase):
 
