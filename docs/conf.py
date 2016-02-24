@@ -28,6 +28,7 @@ html_theme_options = {
     'github_banner': True,
     'travis_button': True,
     'sidebar_width': '230px',
+    'codecov_button': True,
 }
 
 intersphinx_mapping = {
