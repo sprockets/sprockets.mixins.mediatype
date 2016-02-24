@@ -236,6 +236,7 @@ class ContentMixin(object):
         super(ContentMixin, self).initialize()
         self._request_body = None
         self._best_response_match = None
+        self._logger = getattr(self, 'logger', logger)
 
     def get_response_content_type(self):
         """Figure out what content type will be used in the response."""
@@ -260,8 +261,11 @@ class ContentMixin(object):
         """
         Fetch (and cache) the request body as a dictionary.
 
-        :raise web.HTTPError: if the content type cannot be decoded.
-            The status code is set to 415 Unsupported Media Type
+        :raise web.HTTPError:
+            - if the content type cannot be matched, then the status code
+              is set to 415 Unsupported Media Type.
+            - if decoding the content body fails, then the status code is
+              set to 400 Bad Syntax.
 
         """
         if self._request_body is None:
@@ -273,11 +277,15 @@ class ContentMixin(object):
                                      content_type_header.content_subtype])
             try:
                 handler = settings[content_type]
-                self._request_body = handler.from_bytes(self.request.body)
-
             except KeyError:
                 raise web.HTTPError(415, 'cannot decode body of type %s',
                                     content_type)
+
+            try:
+                self._request_body = handler.from_bytes(self.request.body)
+            except Exception:
+                self._logger.exception('failed to decode request body')
+                raise web.HTTPError(400, 'failed to decode request')
 
         return self._request_body
 
