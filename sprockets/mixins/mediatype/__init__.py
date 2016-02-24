@@ -38,7 +38,7 @@ set_default_content_type = _mark_deprecated(set_default_content_type)
 ContentMixin = _mark_deprecated(ContentMixin)
 ContentSettings = _mark_deprecated(ContentSettings)
 
-version_info = (1, 0, 4)
+version_info = (2, 0, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ('ContentMixin', 'ContentSettings', 'add_binary_content_type',
            'add_text_content_type', 'set_default_content_type',
