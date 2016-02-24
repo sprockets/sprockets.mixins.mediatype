@@ -1,8 +1,8 @@
 Version History
 ===============
 
-`Next Release`_
----------------
+`2.0.0`_ (24 Feb 2016)
+----------------------
 - Repackage from a module into a package.  Distributing raw modules inside
   of a namespace package is unreliable and questionably correct.
 - Add :func:`sprockets.mixins.mediatype.content.add_transcoder`.
@@ -33,7 +33,8 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/1.0.4...HEAD
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.0.0...HEAD
+.. _2.0.0: https://github.com/sprockets/sprockets.http/compare/1.0.4...2.0.0
 .. _1.0.4: https://github.com/sprockets/sprockets.http/compare/1.0.3...1.0.4
 .. _1.0.3: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.0.3
 .. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2
