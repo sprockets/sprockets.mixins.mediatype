@@ -1,6 +1,11 @@
 Version History
 ===============
 
+`2.0.1`_ (29 Feb 2016)
+----------------------
+- Removed deprecation wrapper since it seems to cause really interesting
+  problems including the much feared meta-class error.
+
 `2.0.0`_ (24 Feb 2016)
 ----------------------
 - Repackage from a module into a package.  Distributing raw modules inside
