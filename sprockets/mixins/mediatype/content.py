@@ -303,4 +303,5 @@ class ContentMixin(object):
         content_type, data_bytes = handler.to_bytes(body)
         if set_content_type:
             self.set_header('Content-Type', content_type)
+            self.add_header('Vary', 'Accept')
         self.write(data_bytes)
