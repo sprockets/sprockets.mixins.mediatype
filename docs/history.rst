@@ -1,6 +1,10 @@
 Version History
 ===============
 
+`Next Release`_
+---------------
+- Set the _`Vary` header if we are setting the content type.
+
 `2.0.1`_ (29 Feb 2016)
 ----------------------
 - Removed deprecation wrapper since it seems to cause really interesting
@@ -38,10 +42,13 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.0.0...HEAD
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.0.1...HEAD
+.. _2.0.1: https://github.com/sprockets/sprockets.http/compare/2.0.0...2.0.1
 .. _2.0.0: https://github.com/sprockets/sprockets.http/compare/1.0.4...2.0.0
 .. _1.0.4: https://github.com/sprockets/sprockets.http/compare/1.0.3...1.0.4
 .. _1.0.3: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.0.3
 .. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2
 .. _1.0.1: https://github.com/sprockets/sprockets.http/compare/1.0.0...1.0.1
 .. _1.0.0: https://github.com/sprockets/sprockets.http/compare/0.0.0...1.0.0
+
+.. _Vary: http://tools.ietf.org/html/rfc7234#section-4.1

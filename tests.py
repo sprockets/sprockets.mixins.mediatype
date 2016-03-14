@@ -95,6 +95,12 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         self.assertEqual(response.headers['Content-Type'],
                          'application/json; charset="utf-8"')
 
+    def test_that_vary_header_is_set(self):
+        response = self.fetch('/', method='POST', body=umsgpack.packb({}),
+                              headers={'Content-Type': 'application/msgpack'})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Vary'], 'Accept')
+
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
 
