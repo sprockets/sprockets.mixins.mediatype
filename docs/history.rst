@@ -1,8 +1,8 @@
 Version History
 ===============
 
-`Next Release`_
----------------
+`2.1.0`_ (16 Mar 2016)
+----------------------
 - Set the _`Vary` header if we are setting the content type.
 
 `2.0.1`_ (29 Feb 2016)
@@ -42,7 +42,8 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.0.1...HEAD
+.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.1.0...HEAD
+.. _2.1.0: https://github.com/sprockets/sprockets.http/compare/2.0.1...2.1.0
 .. _2.0.1: https://github.com/sprockets/sprockets.http/compare/2.0.0...2.0.1
 .. _2.0.0: https://github.com/sprockets/sprockets.http/compare/1.0.4...2.0.0
 .. _1.0.4: https://github.com/sprockets/sprockets.http/compare/1.0.3...1.0.4
