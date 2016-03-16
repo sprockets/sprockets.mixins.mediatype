@@ -14,8 +14,12 @@ except ImportError as error:  # pragma no cover
     def _error_closure(*args, **kwargs):
         raise error
 
-    ContentMixin = _error_closure
-    ContentSettings = _error_closure
+    class ErrorClosureClass(object):
+        def __init__(self, *args, **kwargs):
+            raise error
+
+    ContentMixin = ErrorClosureClass
+    ContentSettings = ErrorClosureClass
     add_binary_content_type = _error_closure
     add_text_content_type = _error_closure
     set_default_content_type = _error_closure
