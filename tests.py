@@ -30,7 +30,8 @@ class UTC(datetime.tzinfo):
 
 class Context(object):
     """Super simple class to call setattr on"""
-    pass
+    def __init__(self):
+        self.settings = {}
 
 
 def pack_string(obj):
@@ -261,6 +262,26 @@ class ContentFunctionTests(unittest.TestCase):
         settings = content.ContentSettings.from_application(self.context)
         transcoder = settings['application/json']
         self.assertIsInstance(transcoder, handlers.TextContentHandler)
+
+    def test_that_install_creates_settings(self):
+        settings = content.install(self.context, 'application/json', 'utf8')
+        self.assertIsNotNone(settings)
+        self.assertEqual(settings.default_content_type, 'application/json')
+        self.assertEqual(settings.default_encoding, 'utf8')
+
+    def test_that_get_settings_returns_none_when_no_settings(self):
+        settings = content.get_settings(self.context)
+        self.assertIsNone(settings)
+
+    def test_that_get_settings_returns_installed_settings(self):
+        settings = content.install(self.context, 'application/xml', 'utf8')
+        other_settings = content.get_settings(self.context)
+        self.assertIs(settings, other_settings)
+
+    def test_that_get_settings_will_create_instance_if_requested(self):
+        settings = content.get_settings(self.context, force_instance=True)
+        self.assertIsNotNone(settings)
+        self.assertIs(content.get_settings(self.context), settings)
 
 
 class MsgPackTranscoderTests(unittest.TestCase):

@@ -31,6 +31,7 @@ from . import handlers
 
 
 logger = logging.getLogger(__name__)
+SETTINGS_KEY = 'sprockets.mixins.mediatype.ContentSettings'
 
 
 class ContentSettings(object):
@@ -103,9 +104,7 @@ class ContentSettings(object):
     @classmethod
     def from_application(cls, application):
         """Retrieve the content settings from an application."""
-        if not hasattr(application, '_content_settings'):
-            setattr(application, '_content_settings', cls())
-        return application._content_settings
+        return get_settings(application, force_instance=True)
 
     @property
     def available_content_types(self):
@@ -117,6 +116,48 @@ class ContentSettings(object):
 
         """
         return self._available_types
+
+
+def install(application, default_content_type, encoding=None):
+    """
+    Install the media type management settings.
+
+    :param tornado.web.Application application: the application to
+        install a :class:`.ContentSettings` object into.
+    :param str|NoneType default_content_type:
+    :param str|NoneType encoding:
+
+    :returns: the content settings instance
+    :rtype: sprockets.mixins.mediatype.content.ContentSettings
+
+    """
+    try:
+        settings = application.settings[SETTINGS_KEY]
+    except KeyError:
+        settings = application.settings[SETTINGS_KEY] = ContentSettings()
+        settings.default_content_type = default_content_type
+        settings.default_encoding = encoding
+    return settings
+
+
+def get_settings(application, force_instance=False):
+    """
+    Retrieve the media type settings for a application.
+
+    :param tornado.web.Application application:
+    :keyword bool force_instance: if :data:`True` then create the
+        instance if it does not exist
+
+    :return: the content settings instance
+    :rtype: sprockets.mixins.mediatype.content.ContentSettings
+
+    """
+    try:
+        return application.settings[SETTINGS_KEY]
+    except KeyError:
+        if not force_instance:
+            return None
+    return install(application, None)
 
 
 def add_binary_content_type(application, content_type, pack, unpack):

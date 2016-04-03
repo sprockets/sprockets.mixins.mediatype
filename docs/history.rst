@@ -1,5 +1,9 @@
 Version History
 ===============
+`Next Release`_
+---------------
+- Add :func:`sprockets.mixins.mediatype.content.install`.
+- Add :func:`sprockets.mixins.mediatype.content.get_settings`.
 
 `2.1.0`_ (16 Mar 2016)
 ----------------------

@@ -9,6 +9,10 @@ Content Type Handling
 
 Content Type Registration
 -------------------------
+.. autofunction:: install
+
+.. autofunction:: get_settings
+
 .. autofunction:: set_default_content_type
 
 .. autofunction:: add_binary_content_type
