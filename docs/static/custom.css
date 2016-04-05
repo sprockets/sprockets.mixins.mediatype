@@ -1,4 +1,21 @@
 @import url("alabaster.css");
 h1.logo {
   font-size: 12pt;
+  overflow-wrap: normal;
+  word-wrap: normal;
+  overflow: hidden;
+  margin-right: -25px; /* works together with div.body padding-left */
+}
+div.body {padding-left: 30px;}
+th.field-name {hyphens: none; -webkit-hyphens: none; -ms-hyphens: none;}
+div.document {width: 90%;}
+/* support small screens too! */
+@media screen and (max-width: 1000px) {
+  div.sphinxsidebar {display: none;}
+  div.document {width: 100%!important;}
+  div.bodywrapper {margin-left: 0;}
+  div.highlight pre {margin-right: -30px;}
+}
+@media screen and (min-width: 1000px) {
+  div.bodywrapper {margin-left: default;}
 }
