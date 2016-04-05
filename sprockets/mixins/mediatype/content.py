@@ -1,6 +1,10 @@
 """
 Content handling for Tornado.
 
+- :func:`.install` creates a settings object and installs it into
+  the :class:`tornado.web.Application` instance
+- :func:`.get_settings` retrieve a :class:`.ContentSettings` object
+  from a :class:`tornado.web.Application` instance
 - :func:`.set_default_content_type` sets the content type that is
   used when an ``Accept`` or ``Content-Type`` header is omitted.
 - :func:`.add_binary_content_type` register transcoders for a binary
@@ -9,6 +13,7 @@ Content handling for Tornado.
   content type
 - :func:`.add_transcoder` register a custom transcoder instance
   for a content type
+
 - :class:`.ContentSettings` an instance of this is attached to
   :class:`tornado.web.Application` to hold the content mapping
   information for the application
@@ -23,6 +28,7 @@ instances.
 
 """
 import logging
+import warnings
 
 from ietfparse import algorithms, errors, headers
 from tornado import web
@@ -32,16 +38,23 @@ from . import handlers
 
 logger = logging.getLogger(__name__)
 SETTINGS_KEY = 'sprockets.mixins.mediatype.ContentSettings'
+"""Key in application.settings to store the ContentSettings instance."""
+
+_warning_issued = False
 
 
 class ContentSettings(object):
     """
     Content selection settings.
 
-    An instance of this class is stashed as the ``_content_settings``
-    attribute on the application object.  It contains the list of
-    available content types and handlers associated with them.  Each
-    handler implements a simple interface:
+    An instance of this class is stashed in ``application.settings``
+    under the :data:`.SETTINGS_KEY` key.  Instead of creating an
+    instance of this class yourself, use the :func:`.install`
+    function to install it into the application.
+
+    The settings instance contains the list of available content
+    types and handlers associated with them.  Each handler implements
+    a simple interface:
 
     - ``to_bytes(dict, encoding:str) -> bytes``
     - ``from_bytes(bytes, encoding:str) -> dict``
@@ -101,9 +114,22 @@ class ContentSettings(object):
     def get(self, content_type, default=None):
         return self._handlers.get(content_type, default)
 
-    @classmethod
-    def from_application(cls, application):
-        """Retrieve the content settings from an application."""
+    @staticmethod
+    def from_application(application):
+        """
+        Retrieve the content settings from an application.
+
+        .. deprecated:: 2.2
+           Use :func:`.install` and :func:`.get_settings` instead
+
+        """
+        global _warning_issued
+        if not _warning_issued:
+            warnings.warn('ContentSettings.from_application returns blank '
+                          'settings object. Please use content.install() '
+                          'and content.get_settings() instead',
+                          DeprecationWarning)
+            _warning_issued = True
         return get_settings(application, force_instance=True)
 
     @property
@@ -233,7 +259,7 @@ def add_transcoder(application, transcoder, content_type=None):
        :returns: the decoded :class:`object` instance
 
     """
-    settings = ContentSettings.from_application(application)
+    settings = get_settings(application, force_instance=True)
     settings[content_type or transcoder.content_type] = transcoder
 
 
@@ -246,7 +272,7 @@ def set_default_content_type(application, content_type, encoding=None):
     :param str|None encoding: encoding to use when one is unspecified
 
     """
-    settings = ContentSettings.from_application(application)
+    settings = get_settings(application, force_instance=True)
     settings.default_content_type = content_type
     settings.default_encoding = encoding
 
@@ -282,7 +308,7 @@ class ContentMixin(object):
     def get_response_content_type(self):
         """Figure out what content type will be used in the response."""
         if self._best_response_match is None:
-            settings = ContentSettings.from_application(self.application)
+            settings = get_settings(self.application, force_instance=True)
             acceptable = headers.parse_http_accept_header(
                 self.request.headers.get(
                     'Accept',
@@ -310,7 +336,7 @@ class ContentMixin(object):
 
         """
         if self._request_body is None:
-            settings = ContentSettings.from_application(self.application)
+            settings = get_settings(self.application, force_instance=True)
             content_type_header = headers.parse_content_type(
                 self.request.headers.get('Content-Type',
                                          settings.default_content_type))
@@ -339,7 +365,7 @@ class ContentMixin(object):
             header be set?  Defaults to :data:`True`
 
         """
-        settings = ContentSettings.from_application(self.application)
+        settings = get_settings(self.application, force_instance=True)
         handler = settings[self.get_response_content_type()]
         content_type, data_bytes = handler.to_bytes(body)
         if set_content_type:

@@ -4,6 +4,7 @@ Version History
 ---------------
 - Add :func:`sprockets.mixins.mediatype.content.install`.
 - Add :func:`sprockets.mixins.mediatype.content.get_settings`.
+- Deprecate :meth:`sprockets.mixins.mediatype.content.ContentSettings.from_application`.
 
 `2.1.0`_ (16 Mar 2016)
 ----------------------
