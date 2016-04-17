@@ -19,3 +19,14 @@ div.document {width: 90%;}
 @media screen and (min-width: 1000px) {
   div.bodywrapper {margin-left: default;}
 }
+/* hanging indent for class names
+ * would use "text-indent: 2em hanging" if it were supported everywhere
+ */
+dl.class > dt, dl.function > dt {
+	text-indent: -4em;
+	padding-left: 4em;
+}
+/* add some space to wrap nicely */
+span.sig-paren::after {
+	content: " ";
+}
