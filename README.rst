@@ -12,6 +12,25 @@ This mix-in adds two methods to a ``tornado.web.RequestHandler`` instance:
 - ``send_response(object)``: serializes the response into the content type
   requested by the ``Accept`` header.
 
+Before adding support for specific content types, you SHOULD install the
+content settings into your ``tornado.web.Application`` instance.  If you
+don't install the content settings, then an instance will be created for
+you by the mix-in; however, the created instance will be empty.  You
+should already have a function that creates the ``Application`` instance.
+If you don't, now is a good time to add one.
+
+.. code-block:: python
+
+   from sprockets.mixins.mediatype import content
+   from tornado import web
+
+   def make_application():
+       application = web.Application([
+           # insert your handlers here
+       ])
+       content.install(application, 'application/json', 'utf-8')
+       return application
+
 Support for a content types is enabled by calling ``add_binary_content_type``,
 ``add_text_content_type`` or the ``add_transcoder`` functions with the
 ``tornado.web.Application`` instance, the content type, encoding and decoding
@@ -29,6 +48,7 @@ functions as parameters:
            # insert your handlers here
        ])
 
+       content.install(application, 'application/json', 'utf-8')
        content.add_text_content_type(application,
                                      'application/json', 'utf-8',
                                      json.dumps, json.loads)
@@ -52,6 +72,7 @@ types:
            # insert your handlers here
        ])
 
+       content.install(application, 'application/json', 'utf-8')
        content.add_transcoder(application, transcoders.JSONTranscoder())
 
        return application

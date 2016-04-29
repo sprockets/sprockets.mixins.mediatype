@@ -1,5 +1,10 @@
 Version History
 ===============
+`Next Release`_
+---------------
+- Add :func:`sprockets.mixins.mediatype.content.install`.
+- Add :func:`sprockets.mixins.mediatype.content.get_settings`.
+- Deprecate :meth:`sprockets.mixins.mediatype.content.ContentSettings.from_application`.
 
 `2.1.0`_ (16 Mar 2016)
 ----------------------
@@ -42,14 +47,14 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.http/compare/2.1.0...HEAD
-.. _2.1.0: https://github.com/sprockets/sprockets.http/compare/2.0.1...2.1.0
-.. _2.0.1: https://github.com/sprockets/sprockets.http/compare/2.0.0...2.0.1
-.. _2.0.0: https://github.com/sprockets/sprockets.http/compare/1.0.4...2.0.0
-.. _1.0.4: https://github.com/sprockets/sprockets.http/compare/1.0.3...1.0.4
-.. _1.0.3: https://github.com/sprockets/sprockets.http/compare/1.0.2...1.0.3
-.. _1.0.2: https://github.com/sprockets/sprockets.http/compare/1.0.1...1.0.2
-.. _1.0.1: https://github.com/sprockets/sprockets.http/compare/1.0.0...1.0.1
-.. _1.0.0: https://github.com/sprockets/sprockets.http/compare/0.0.0...1.0.0
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.1.0...HEAD
+.. _2.1.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.0.1...2.1.0
+.. _2.0.1: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.0.0...2.0.1
+.. _2.0.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.4...2.0.0
+.. _1.0.4: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.3...1.0.4
+.. _1.0.3: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.2...1.0.3
+.. _1.0.2: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.1...1.0.2
+.. _1.0.1: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.0...1.0.1
+.. _1.0.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/0.0.0...1.0.0
 
 .. _Vary: http://tools.ietf.org/html/rfc7234#section-4.1

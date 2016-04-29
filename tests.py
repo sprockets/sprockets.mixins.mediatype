@@ -30,7 +30,8 @@ class UTC(datetime.tzinfo):
 
 class Context(object):
     """Super simple class to call setattr on"""
-    pass
+    def __init__(self):
+        self.settings = {}
 
 
 def pack_string(obj):
@@ -186,13 +187,6 @@ class JSONTranscoderTests(unittest.TestCase):
 
 class ContentSettingsTests(unittest.TestCase):
 
-    def test_that_from_application_creates_instance(self):
-
-        context = Context()
-        settings = content.ContentSettings.from_application(context)
-        self.assertIs(content.ContentSettings.from_application(context),
-                      settings)
-
     def test_that_handler_listed_in_available_content_types(self):
         settings = content.ContentSettings()
         settings['application/json'] = object()
@@ -236,31 +230,52 @@ class ContentFunctionTests(unittest.TestCase):
         self.context = Context()
 
     def test_that_add_binary_content_type_creates_binary_handler(self):
+        settings = content.install(self.context,
+                                   'application/octet-stream')
         content.add_binary_content_type(self.context,
                                         'application/vnd.python.pickle',
                                         pickle.dumps, pickle.loads)
-        settings = content.ContentSettings.from_application(self.context)
         transcoder = settings['application/vnd.python.pickle']
         self.assertIsInstance(transcoder, handlers.BinaryContentHandler)
         self.assertIs(transcoder._pack, pickle.dumps)
         self.assertIs(transcoder._unpack, pickle.loads)
 
     def test_that_add_text_content_type_creates_text_handler(self):
+        settings = content.install(self.context, 'application/json')
         content.add_text_content_type(self.context, 'application/json', 'utf8',
                                       json.dumps, json.loads)
-        settings = content.ContentSettings.from_application(self.context)
         transcoder = settings['application/json']
         self.assertIsInstance(transcoder, handlers.TextContentHandler)
         self.assertIs(transcoder._dumps, json.dumps)
         self.assertIs(transcoder._loads, json.loads)
 
     def test_that_add_text_content_type_discards_charset_parameter(self):
+        settings = content.install(self.context, 'application/json', 'utf-8')
         content.add_text_content_type(self.context,
                                       'application/json;charset=UTF-8', 'utf8',
                                       json.dumps, json.loads)
-        settings = content.ContentSettings.from_application(self.context)
         transcoder = settings['application/json']
         self.assertIsInstance(transcoder, handlers.TextContentHandler)
+
+    def test_that_install_creates_settings(self):
+        settings = content.install(self.context, 'application/json', 'utf8')
+        self.assertIsNotNone(settings)
+        self.assertEqual(settings.default_content_type, 'application/json')
+        self.assertEqual(settings.default_encoding, 'utf8')
+
+    def test_that_get_settings_returns_none_when_no_settings(self):
+        settings = content.get_settings(self.context)
+        self.assertIsNone(settings)
+
+    def test_that_get_settings_returns_installed_settings(self):
+        settings = content.install(self.context, 'application/xml', 'utf8')
+        other_settings = content.get_settings(self.context)
+        self.assertIs(settings, other_settings)
+
+    def test_that_get_settings_will_create_instance_if_requested(self):
+        settings = content.get_settings(self.context, force_instance=True)
+        self.assertIsNotNone(settings)
+        self.assertIs(content.get_settings(self.context), settings)
 
 
 class MsgPackTranscoderTests(unittest.TestCase):
