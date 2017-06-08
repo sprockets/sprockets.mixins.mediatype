@@ -309,7 +309,7 @@ class ContentMixin(object):
         """Figure out what content type will be used in the response."""
         if self._best_response_match is None:
             settings = get_settings(self.application, force_instance=True)
-            acceptable = headers.parse_http_accept_header(
+            acceptable = headers.parse_accept(
                 self.request.headers.get(
                     'Accept',
                     settings.default_content_type
