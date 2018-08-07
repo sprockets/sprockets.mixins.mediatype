@@ -1,6 +1,11 @@
 Version History
 ===============
 
+`2.2.2`_ (7 Apr 2018)
+---------------------
+- Add support for Python 3.5 throug 3.7
+- Add support for Tornado < 6
+
 `2.2.1`_ (12 Apr 2017)
 ----------------------
 - Pin :mod:`ietfparse` to avoid breakages introduced in 1.5.0.
@@ -53,7 +58,8 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.1...HEAD
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.2...HEAD
+.. _2.2.2: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.1...2.2.2
 .. _2.2.1: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.0...2.2.1
 .. _2.2.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.1.0...2.2.0
 .. _2.1.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.0.1...2.1.0
