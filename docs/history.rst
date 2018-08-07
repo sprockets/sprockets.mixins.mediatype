@@ -6,7 +6,7 @@ Version History
 - Add support for Python 3.5 throug 3.7
 - Add support for Tornado < 6
 
-`2.2.1`_ (12 Apr 2017)
+`2.2.1`_ (12 Apr 2018)
 ----------------------
 - Pin :mod:`ietfparse` to avoid breakages introduced in 1.5.0.
 
