@@ -172,7 +172,7 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-------------------------------+-------------------------------+
         | :class:`float`                | `float family`_               |
         +-------------------------------+-------------------------------+
-        | String (see note)             | `str family`_                 |
+        | String                        | `str family`_                 |
         +-------------------------------+-------------------------------+
         | :class:`bytes`                | `bin family`_                 |
         +-------------------------------+-------------------------------+
@@ -188,8 +188,6 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-------------------------------+-------------------------------+
         | :class:`uuid.UUID`            | Converted to String           |
         +-------------------------------+-------------------------------+
-
-        .. note::
 
         .. _nil byte: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
