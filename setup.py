@@ -1,35 +1,30 @@
 #!/usr/bin/env python
 #
-
-import os
+import pathlib
 import setuptools
 
 
-def read_requirements(file_name):
+REPO_DIR = pathlib.Path(__name__).parent
+
+
+def read_requirements(name):
     requirements = []
-    try:
-        with open(os.path.join('requires', file_name)) as req_file:
-            for req_line in req_file:
-                req_line = req_line.strip()
-                if '#' in req_line:
-                    req_line = req_line[0:req_line.find('#')].strip()
-                if req_line.startswith('-r'):
-                    req_line = req_line[2:].strip()
-                    requirements.extend(read_requirements(req_line))
-                else:
-                    requirements.append(req_line)
-    except IOError:
-        pass
+    for req_line in REPO_DIR.joinpath(name).read_text().split('\n'):
+        req_line = req_line.strip()
+        if '#' in req_line:
+            req_line = req_line[0:req_line.find('#')].strip()
+        if req_line.startswith('-r'):
+            req_line = req_line[2:].strip()
+            requirements.extend(read_requirements(req_line))
+        else:
+            requirements.append(req_line)
     return requirements
 
-
-install_requires = read_requirements('installation.txt')
-tests_require = read_requirements('testing.txt')
 
 setuptools.setup(
     name='sprockets.mixins.mediatype',
     description='A mixin for reporting handling content-type/accept headers',
-    long_description='\n' + open('README.rst').read(),
+    long_description=REPO_DIR.joinpath('README.rst').read_text(),
     url='https://github.com/sprockets/sprockets.mixins.media_type',
     author='AWeber Communications',
     author_email='api@aweber.com',
@@ -53,8 +48,8 @@ setuptools.setup(
         'sprockets.mixins',
         'sprockets.mixins.mediatype'
     ],
-    install_requires=install_requires,
-    tests_require=tests_require,
+    install_requires=read_requirements('requires/installation.txt'),
+    tests_require=read_requirements('requires/testing.txt'),
     extras_require={
         'msgpack': ['u-msgpack-python>=2.5.0,<3']
     },
