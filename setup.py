@@ -54,6 +54,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=install_requires,
     tests_require=tests_require,
+    extras_require={
+        'msgpack': ['u-msgpack-python>=2.5.0,<3']
+    },
     namespace_packages=['sprockets', 'sprockets.mixins'],
     test_suite='nose.collector',
     python_requires='>=3.5',
