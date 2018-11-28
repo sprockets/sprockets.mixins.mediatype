@@ -89,13 +89,11 @@ request handlers.
    class SomeHandler(content.ContentMixin, web.RequestHandler):
        def get(self):
            self.send_response({'data': 'value'})
-           self.finish()
 
        def post(self):
            body = self.get_request_body()
            # do whatever
            self.send_response({'action': 'performed'})
-           self.finish()
 
 Based on the settings stored in the ``Application`` instance and the HTTP
 headers, the request and response data will be handled correctly or the

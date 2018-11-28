@@ -75,7 +75,6 @@ class ContentSettings(object):
              response_body = settings['application/msgpack'].to_bytes(
                 response_dict, encoding='utf-8')
              self.write(response_body)
-             self.finish()
 
        def make_application():
           app = web.Application([web.url('/', SomeHandler)])
@@ -288,7 +287,6 @@ class ContentMixin(object):
              body = self.get_request_body()
              # do stuff --> response_dict
              self.send_response(response_dict)
-             self.finish()
 
     :meth:`get_request_body` will deserialize the request data into
     a dictionary based on the :http:header:`Content-Type` request

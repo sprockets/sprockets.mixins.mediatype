@@ -1,5 +1,4 @@
+-r docs.txt
 -r testing.txt
 -r installation.txt
 -e .[msgpack]
-sphinx>=1.2,<2
-sphinxcontrib-httpdomain>=1.3,<2
