@@ -2,6 +2,7 @@
 Bundled media type transcoders.
 
 - :class:`.JSONTranscoder` implements JSON encoding/decoding
+- :class:`.HTMLTranscoder` implements HTML encoding/decoding
 - :class:`.MsgPackTranscoder` implements msgpack encoding/decoding
 
 """
@@ -115,6 +116,49 @@ class JSONTranscoder(handlers.TextContentHandler):
         raise TypeError('{!r} is not JSON serializable'.format(obj))
 
 
+class HTMLTranscoder(handlers.TextContentHandler):
+    """
+    HTML transcoder instance.
+
+    :param str content_type: the content type that this encoder instance
+        implements. If omitted, ``application/html`` is used. This is
+        passed directly to the ``TextContentHandler`` initializer.
+    :param str default_encoding: the encoding to use if none is specified.
+        If omitted, this defaults to ``utf-8``. This is passed directly to
+        the ``TextContentHandler`` initializer.
+
+    """
+    def __init__(self, content_type='text/html', default_encoding='utf-8'):
+        super(HTMLTranscoder, self).__init__(
+            content_type, self.dumps, self.loads, default_encoding)
+
+    @staticmethod
+    def dumps(value):
+        """
+        Just pass through the value if it's a string, otherwise dump it as
+        JSON.
+
+        :param mixed value: The value to possibly transform or pass through
+        :rtype: value
+
+        """
+        if not isinstance(value, (bytes, str)):
+            return '<html><body><pre>{}</pre></body></html>'.format(
+                json.dumps(value, indent=2))
+        return value
+
+    @staticmethod
+    def loads(value):
+        """
+        Just pass through the value.
+
+        :param mixed value: The value that is being passed through
+        :rtype: value
+
+        """
+        return value
+
+
 class MsgPackTranscoder(handlers.BinaryContentHandler):
     """
     Msgpack Transcoder instance.
@@ -136,7 +180,6 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         if umsgpack is None:
             raise RuntimeError('Cannot import MsgPackTranscoder, '
                                'umsgpack is not available')
-
         super().__init__(content_type, self.packb, self.unpackb)
 
     def packb(self, data):

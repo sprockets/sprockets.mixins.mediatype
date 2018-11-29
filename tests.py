@@ -14,19 +14,6 @@ from sprockets.mixins.mediatype import content, handlers, transcoders
 import examples
 
 
-class UTC(datetime.tzinfo):
-    ZERO = datetime.timedelta(0)
-
-    def utcoffset(self, dt):
-        return self.ZERO
-
-    def dst(self, dt):
-        return self.ZERO
-
-    def tzname(self, dt):
-        return 'UTC'
-
-
 class Context:
     """Super simple class to call setattr on"""
     def __init__(self):
@@ -154,7 +141,8 @@ class JSONTranscoderTests(unittest.TestCase):
                          '{"now":"%s"}' % obj['now'].isoformat())
 
     def test_that_tzaware_datetimes_include_tzoffset(self):
-        obj = {'now': datetime.datetime.now().replace(tzinfo=UTC())}
+        obj = {'now': datetime.datetime.now().replace(
+            tzinfo=datetime.timezone.utc)}
         self.assertTrue(obj['now'].isoformat().endswith('+00:00'))
         dumped = self.transcoder.dumps(obj)
         self.assertEqual(dumped.replace(' ', ''),
@@ -270,6 +258,31 @@ class ContentFunctionTests(unittest.TestCase):
         self.assertIs(content.get_settings(self.context), settings)
 
 
+class HTMLTranscoderTests(unittest.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.transcoder = transcoders.HTMLTranscoder()
+
+    def test_that_strings_are_dumped_as_strings(self):
+        value = 'foo'
+        dumped = self.transcoder.dumps(value)
+        self.assertEqual(self.transcoder.loads(dumped), value)
+        self.assertEqual(dumped, value)
+
+    def test_that_dicts_are_returned_as_json_in_html(self):
+        value = {'foo': 'bar'}
+        dumped = self.transcoder.dumps(value)
+        self.assertIn('<html>', dumped)
+        self.assertIn(json.dumps(value, indent=2), dumped)
+
+    def test_that_loads_is_opaque(self):
+        value = {'foo': 'bar'}
+        dumped = self.transcoder.dumps(value)
+        self.assertIn(json.dumps(value, indent=2),
+                      self.transcoder.loads(dumped))
+
+
 class MsgPackTranscoderTests(unittest.TestCase):
 
     def setUp(self):
@@ -339,7 +352,7 @@ class MsgPackTranscoderTests(unittest.TestCase):
         self.assertEqual(dumped, pack_string(now.isoformat()))
 
     def test_that_tzaware_datetimes_include_tzoffset(self):
-        now = datetime.datetime.now().replace(tzinfo=UTC())
+        now = datetime.datetime.now().replace(tzinfo=datetime.timezone.utc)
         self.assertTrue(now.isoformat().endswith('+00:00'))
         dumped = self.transcoder.packb(now)
         self.assertEqual(self.transcoder.unpackb(dumped), now.isoformat())
