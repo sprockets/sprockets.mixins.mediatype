@@ -4,7 +4,6 @@ import json
 import os
 import pickle
 import struct
-import sys
 import unittest
 import uuid
 
@@ -28,7 +27,7 @@ class UTC(datetime.tzinfo):
         return 'UTC'
 
 
-class Context(object):
+class Context:
     """Super simple class to call setattr on"""
     def __init__(self):
         self.settings = {}
@@ -37,27 +36,27 @@ class Context(object):
 def pack_string(obj):
     """Optimally pack a string according to msgpack format"""
     payload = str(obj).encode('ASCII')
-    l = len(payload)
-    if l < (2 ** 5):
-        prefix = struct.pack('B', 0b10100000 | l)
-    elif l < (2 ** 8):
-        prefix = struct.pack('BB', 0xD9, l)
-    elif l < (2 ** 16):
-        prefix = struct.pack('>BH', 0xDA, l)
+    pl = len(payload)
+    if pl < (2 ** 5):
+        prefix = struct.pack('B', 0b10100000 | pl)
+    elif pl < (2 ** 8):
+        prefix = struct.pack('BB', 0xD9, pl)
+    elif pl < (2 ** 16):
+        prefix = struct.pack('>BH', 0xDA, pl)
     else:
-        prefix = struct.pack('>BI', 0xDB, l)
+        prefix = struct.pack('>BI', 0xDB, pl)
     return prefix + payload
 
 
 def pack_bytes(payload):
     """Optimally pack a byte string according to msgpack format"""
-    l = len(payload)
-    if l < (2 ** 8):
-        prefix = struct.pack('BB', 0xC4, l)
-    elif l < (2 ** 16):
-        prefix = struct.pack('>BH', 0xC5, l)
+    pl = len(payload)
+    if pl < (2 ** 8):
+        prefix = struct.pack('BB', 0xC4, pl)
+    elif pl < (2 ** 16):
+        prefix = struct.pack('>BH', 0xC5, pl)
     else:
-        prefix = struct.pack('>BI', 0xC6, l)
+        prefix = struct.pack('>BI', 0xC6, pl)
     return prefix + payload
 
 
@@ -111,16 +110,16 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
     def test_that_request_with_unhandled_type_results_in_415(self):
         response = self.fetch(
             '/', method='POST', headers={'Content-Type': 'application/xml'},
-            body=(u'<request><name>value</name>'
-                  u'<embedded><utf8>\u2731</utf8></embedded>'
-                  u'</request>').encode('utf-8'))
+            body=('<request><name>value</name>'
+                  '<embedded><utf8>\u2731</utf8></embedded>'
+                  '</request>').encode('utf-8'))
         self.assertEqual(response.code, 415)
 
     def test_that_msgpack_request_returns_default_type(self):
         body = {
             'name': 'value',
             'embedded': {
-                'utf8': u'\u2731'
+                'utf8': '\u2731'
             }
         }
         response = self.fetch('/', method='POST', body=umsgpack.packb(body),
@@ -140,7 +139,7 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
 class JSONTranscoderTests(unittest.TestCase):
 
     def setUp(self):
-        super(JSONTranscoderTests, self).setUp()
+        super().setUp()
         self.transcoder = transcoders.JSONTranscoder()
 
     def test_that_uuids_are_dumped_as_strings(self):
@@ -160,13 +159,6 @@ class JSONTranscoderTests(unittest.TestCase):
         dumped = self.transcoder.dumps(obj)
         self.assertEqual(dumped.replace(' ', ''),
                          '{"now":"%s"}' % obj['now'].isoformat())
-
-    @unittest.skipIf(sys.version_info[0] == 2, 'bytes unsupported on python 2')
-    def test_that_bytes_are_base64_encoded(self):
-        bin = bytes(os.urandom(127))
-        dumped = self.transcoder.dumps({'bin': bin})
-        self.assertEqual(
-            dumped, '{"bin":"%s"}' % base64.b64encode(bin).decode('ASCII'))
 
     def test_that_bytearrays_are_base64_encoded(self):
         bin = bytearray(os.urandom(127))
@@ -226,7 +218,7 @@ class ContentSettingsTests(unittest.TestCase):
 class ContentFunctionTests(unittest.TestCase):
 
     def setUp(self):
-        super(ContentFunctionTests, self).setUp()
+        super().setUp()
         self.context = Context()
 
     def test_that_add_binary_content_type_creates_binary_handler(self):
@@ -281,11 +273,11 @@ class ContentFunctionTests(unittest.TestCase):
 class MsgPackTranscoderTests(unittest.TestCase):
 
     def setUp(self):
-        super(MsgPackTranscoderTests, self).setUp()
+        super().setUp()
         self.transcoder = transcoders.MsgPackTranscoder()
 
     def test_that_strings_are_dumped_as_strings(self):
-        dumped = self.transcoder.packb(u'foo')
+        dumped = self.transcoder.packb('foo')
         self.assertEqual(self.transcoder.unpackb(dumped), 'foo')
         self.assertEqual(dumped, pack_string('foo'))
 
@@ -373,6 +365,6 @@ class MsgPackTranscoderTests(unittest.TestCase):
 
     def test_that_utf8_values_can_be_forced_to_bytes(self):
         data = b'a ascii value'
-        dumped = self.transcoder.packb(transcoders.BinaryWrapper(data))
+        dumped = self.transcoder.packb(data)
         self.assertEqual(self.transcoder.unpackb(dumped), data)
         self.assertEqual(dumped, pack_bytes(data))

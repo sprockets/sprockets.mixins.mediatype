@@ -43,7 +43,7 @@ SETTINGS_KEY = 'sprockets.mixins.mediatype.ContentSettings'
 _warning_issued = False
 
 
-class ContentSettings(object):
+class ContentSettings:
     """
     Content selection settings.
 
@@ -75,7 +75,6 @@ class ContentSettings(object):
              response_body = settings['application/msgpack'].to_bytes(
                 response_dict, encoding='utf-8')
              self.write(response_body)
-             self.finish()
 
        def make_application():
           app = web.Application([web.url('/', SomeHandler)])
@@ -277,7 +276,7 @@ def set_default_content_type(application, content_type, encoding=None):
     settings.default_encoding = encoding
 
 
-class ContentMixin(object):
+class ContentMixin:
     """
     Mix this in to add some content handling methods.
 
@@ -288,7 +287,6 @@ class ContentMixin(object):
              body = self.get_request_body()
              # do stuff --> response_dict
              self.send_response(response_dict)
-             self.finish()
 
     :meth:`get_request_body` will deserialize the request data into
     a dictionary based on the :http:header:`Content-Type` request
@@ -300,7 +298,7 @@ class ContentMixin(object):
     """
 
     def initialize(self):
-        super(ContentMixin, self).initialize()
+        super().initialize()
         self._request_body = None
         self._best_response_match = None
         self._logger = getattr(self, 'logger', logger)

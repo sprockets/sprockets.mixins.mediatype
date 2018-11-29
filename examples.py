@@ -11,7 +11,6 @@ class SimpleHandler(content.ContentMixin, web.RequestHandler):
         body = self.get_request_body()
         self.set_status(200)
         self.send_response(body)
-        self.finish()
 
 
 def make_application(**settings):

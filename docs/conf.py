@@ -1,23 +1,18 @@
-import alabaster
-from sprockets.mixins.mediatype import __version__
+import pkg_resources
 
 needs_sphinx = '1.0'
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
               'sphinxcontrib.autohttp.tornado']
-source_suffix = '.rst'
 master_doc = 'index'
 project = 'sprockets.mixins.mediatype'
-copyright = '2015-2016, AWeber Communications'
-release = __version__
+copyright = '2015-2018, AWeber Communications'
+release = pkg_resources.get_distribution('sprockets.mixins.mediatype').version
 version = '.'.join(release.split('.')[0:1])
 
-pygments_style = 'sphinx'
-html_theme = 'alabaster'
 html_style = 'custom.css'
 html_static_path = ['static']
-html_theme_path = [alabaster.get_path()]
 html_sidebars = {
     '**': ['about.html', 'navigation.html'],
 }
