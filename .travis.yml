@@ -6,6 +6,7 @@ python:
   - 3.7
 install:
   - pip install codecov -r requires/development.txt
+  - pip install codecov -r requires/installation.txt
 script:
   - nosetests
   - python setup.py check
