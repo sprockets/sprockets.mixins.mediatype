@@ -319,7 +319,7 @@ class ContentMixin:
                     [selected.content_type, selected.content_subtype])
                 if selected.content_suffix is not None:
                     self._best_response_match = '+'.join(
-                    [self._best_response_match, selected.content_suffix])
+                        [self._best_response_match, selected.content_suffix])
             except errors.NoMatch:
                 self._best_response_match = settings.default_content_type
 
