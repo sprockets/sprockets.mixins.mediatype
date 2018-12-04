@@ -317,6 +317,9 @@ class ContentMixin:
                     acceptable, settings.available_content_types)
                 self._best_response_match = '/'.join(
                     [selected.content_type, selected.content_subtype])
+                if selected.content_suffix is not None:
+                    self._best_response_match = '+'.join(
+                        [self._best_response_match, selected.content_suffix])
             except errors.NoMatch:
                 self._best_response_match = settings.default_content_type
 
@@ -340,6 +343,9 @@ class ContentMixin:
                                          settings.default_content_type))
             content_type = '/'.join([content_type_header.content_type,
                                      content_type_header.content_subtype])
+            if content_type_header.content_suffix is not None:
+                content_type = '+'.join([content_type,
+                                         content_type_header.content_suffix])
             try:
                 handler = settings[content_type]
             except KeyError:

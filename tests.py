@@ -101,6 +101,17 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Vary'], 'Accept')
 
+    def test_that_accept_header_with_suffix_is_obeyed(self):
+        content.add_transcoder(
+            self._app,
+            transcoders.MsgPackTranscoder(content_type='expected/content'),
+            'application/vendor+msgpack')
+        response = self.fetch('/', method='POST', body='{}',
+                              headers={'Accept': 'application/vendor+msgpack',
+                                       'Content-Type': 'application/json'})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-Type'], 'expected/content')
+
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
 
@@ -134,6 +145,17 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
                   '</methodName><params><param><value><str>Hi</str></value>'
                   '</param></params></methodCall>').encode('utf-8'))
         self.assertEqual(response.code, 400)
+
+    def test_that_content_type_suffix_is_handled(self):
+        content.add_transcoder(
+            self._app, transcoders.JSONTranscoder(),
+            'application/vendor+json')
+        body = {'hello': 'world'}
+        response = self.fetch(
+            '/', method='POST', body=json.dumps(body),
+            headers={'Content-Type': 'application/vendor+json'})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(json.loads(response.body.decode()), body)
 
 
 class JSONTranscoderTests(unittest.TestCase):
