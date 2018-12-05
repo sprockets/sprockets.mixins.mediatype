@@ -28,7 +28,6 @@ instances.
 
 """
 import logging
-import warnings
 
 from ietfparse import algorithms, errors, headers
 from tornado import web
@@ -71,7 +70,7 @@ class ContentSettings:
        class SomeHandler(web.RequestHandler):
 
           def get(self):
-             settings = ContentSettings.from_application(self.application)
+             settings = ContentSettings.get_settings(self.application)
              response_body = settings['application/msgpack'].to_bytes(
                 response_dict, encoding='utf-8')
              self.write(response_body)
@@ -112,24 +111,6 @@ class ContentSettings:
 
     def get(self, content_type, default=None):
         return self._handlers.get(content_type, default)
-
-    @staticmethod
-    def from_application(application):
-        """
-        Retrieve the content settings from an application.
-
-        .. deprecated:: 2.2
-           Use :func:`.install` and :func:`.get_settings` instead
-
-        """
-        global _warning_issued
-        if not _warning_issued:
-            warnings.warn('ContentSettings.from_application returns blank '
-                          'settings object. Please use content.install() '
-                          'and content.get_settings() instead',
-                          DeprecationWarning)
-            _warning_issued = True
-        return get_settings(application, force_instance=True)
 
     @property
     def available_content_types(self):
