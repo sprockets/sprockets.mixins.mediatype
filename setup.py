@@ -36,8 +36,6 @@ setuptools.setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Software Development :: Libraries',
@@ -57,5 +55,5 @@ setuptools.setup(
     use_scm_version=True,
     namespace_packages=['sprockets', 'sprockets.mixins'],
     test_suite='nose.collector',
-    python_requires='>=3.5',
+    python_requires='>=3.7',
     zip_safe=False)
