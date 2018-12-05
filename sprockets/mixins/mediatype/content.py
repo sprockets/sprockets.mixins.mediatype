@@ -77,7 +77,7 @@ class ContentSettings:
              self.write(response_body)
 
        def make_application():
-          app = web.Application([web.url('/', SomeHandler)])
+          app = web.Application([('/', SomeHandler)])
           add_binary_content_type(app, 'application/msgpack',
                                   msgpack.packb, msgpack.unpackb)
           add_text_content_type(app, 'application/json', 'utf-8',

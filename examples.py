@@ -14,7 +14,7 @@ class SimpleHandler(content.ContentMixin, web.RequestHandler):
 
 
 def make_application(**settings):
-    application = web.Application([web.url(r'/', SimpleHandler)], **settings)
+    application = web.Application([('/', SimpleHandler)], **settings)
     content.set_default_content_type(application, 'application/json',
                                      encoding='utf-8')
     content.add_transcoder(application, transcoders.MsgPackTranscoder())
