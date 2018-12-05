@@ -1,6 +1,14 @@
 Version History
 ===============
 
+`3.0.0`_ (4 Dec 2018)
+---------------------
+- Add MessagePack dependencies to package extras (eg. `pip install sprockets.mixins.mediatype[msgpak]`)
+- Update to minimum of ietfparse 1.5.1
+- Drop support for Python < 3.7
+- Drop support for Tornado < 5
+- Remove deprecated :meth:`sprockets.mixins.mediatype.content.ContentSettings.from_application`.
+
 `2.2.2`_ (7 Apr 2018)
 ---------------------
 - Add support for Python 3.5 through 3.7
@@ -58,7 +66,8 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.2...HEAD
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.media_type/compare/3.0.0...HEAD
+.. _3.0.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.2...3.0.0
 .. _2.2.2: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.1...2.2.2
 .. _2.2.1: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.0...2.2.1
 .. _2.2.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.1.0...2.2.0
