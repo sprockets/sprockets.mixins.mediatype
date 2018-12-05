@@ -2,7 +2,7 @@ build:
     image: latest
 
 python:
-    version: 3
+    version: 4.0rc1
     pip_install: true
 
 requirements_file: requires/docs.txt
