@@ -3,7 +3,7 @@ Version History
 
 `3.0.0`_ (4 Dec 2018)
 ---------------------
-- Add MessagePack dependencies to package extras (eg. `pip install sprockets.mixins.mediatype[msgpak]`)
+- Add MessagePack dependencies to package extras (eg. `pip install sprockets.mixins.mediatype[msgpack]`)
 - Update to minimum of ietfparse 1.5.1
 - Drop support for Python < 3.7
 - Drop support for Tornado < 5
