@@ -9,7 +9,7 @@ Set up a development environment
 The first thing that you need is a development environment so that you can
 run the test suite, update the documentation, and everything else that is
 involved in contributing.  The easiest way to do that is to create a virtual
-environment for your endevours::
+environment for your endeavors::
 
    $ virtualenv -p python2.7 env
 
