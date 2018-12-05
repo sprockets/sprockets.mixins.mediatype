@@ -101,7 +101,7 @@ appropriate HTTP exceptions will be raised.
 
 .. |Documentation| image:: https://readthedocs.org/projects/sprocketsmixinsmedia-type/badge/?version=latest
    :target: https://sprocketsmixinsmedia-type.readthedocs.org/
-.. |Build Badge| image:: https://travis-ci.org/sprockets/sprockets.mixins.media_type.svg
-   :target: https://travis-ci.org/sprockets/sprockets.mixins.media_type
+.. |Build Badge| image:: https://travis-ci.org/sprockets/sprockets.mixins.mediatype.svg
+   :target: https://travis-ci.org/sprockets/sprockets.mixins.mediatype
 .. |Package Info| image:: https://img.shields.io/pypi/v/sprockets.mixins.mediatype.svg
    :target: https://pypi.python.org/pypi/sprockets.mixins.mediatype

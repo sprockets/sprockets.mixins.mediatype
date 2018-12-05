@@ -25,7 +25,7 @@ setuptools.setup(
     name='sprockets.mixins.mediatype',
     description='A mixin for reporting handling content-type/accept headers',
     long_description=REPO_DIR.joinpath('README.rst').read_text(),
-    url='https://github.com/sprockets/sprockets.mixins.media_type',
+    url='https://github.com/sprockets/sprockets.mixins.mediatype',
     author='AWeber Communications',
     author_email='api@aweber.com',
     license='BSD',

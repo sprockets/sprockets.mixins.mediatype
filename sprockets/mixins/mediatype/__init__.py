@@ -1,5 +1,5 @@
 """
-sprockets.mixins.media_type
+sprockets.mixins.mediatype
 
 """
 

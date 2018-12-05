@@ -18,7 +18,7 @@ html_sidebars = {
 }
 html_theme_options = {
     'github_user': 'sprockets',
-    'github_repo': 'sprockets.mixins.media_type',
+    'github_repo': 'sprockets.mixins.mediatype',
     'description': 'Content-Type negotation mix-in',
     'github_banner': True,
     'travis_button': True,

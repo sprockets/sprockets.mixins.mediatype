@@ -66,16 +66,16 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.mixins.media_type/compare/3.0.0...HEAD
-.. _3.0.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.2...3.0.0
-.. _2.2.2: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.1...2.2.2
-.. _2.2.1: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.2.0...2.2.1
-.. _2.2.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.1.0...2.2.0
-.. _2.1.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.0.1...2.1.0
-.. _2.0.1: https://github.com/sprockets/sprockets.mixins.media_type/compare/2.0.0...2.0.1
-.. _2.0.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.4...2.0.0
-.. _1.0.4: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.3...1.0.4
-.. _1.0.3: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.2...1.0.3
-.. _1.0.2: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.1...1.0.2
-.. _1.0.1: https://github.com/sprockets/sprockets.mixins.media_type/compare/1.0.0...1.0.1
-.. _1.0.0: https://github.com/sprockets/sprockets.mixins.media_type/compare/0.0.0...1.0.0
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.0...HEAD
+.. _3.0.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.2...3.0.0
+.. _2.2.2: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.1...2.2.2
+.. _2.2.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.0...2.2.1
+.. _2.2.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.1.0...2.2.0
+.. _2.1.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.0.1...2.1.0
+.. _2.0.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.0.0...2.0.1
+.. _2.0.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/1.0.4...2.0.0
+.. _1.0.4: https://github.com/sprockets/sprockets.mixins.mediatype/compare/1.0.3...1.0.4
+.. _1.0.3: https://github.com/sprockets/sprockets.mixins.mediatype/compare/1.0.2...1.0.3
+.. _1.0.2: https://github.com/sprockets/sprockets.mixins.mediatype/compare/1.0.1...1.0.2
+.. _1.0.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/1.0.0...1.0.1
+.. _1.0.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/0.0.0...1.0.0
