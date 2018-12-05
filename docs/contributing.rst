@@ -11,7 +11,7 @@ run the test suite, update the documentation, and everything else that is
 involved in contributing.  The easiest way to do that is to create a virtual
 environment for your endeavors::
 
-   $ virtualenv -p python2.7 env
+   $ python3 -m venv env
 
 Don't worry about writing code against previous versions of Python unless
 you you don't have a choice.  That is why we run our tests through `tox`_.
