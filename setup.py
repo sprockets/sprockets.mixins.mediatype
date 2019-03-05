@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-#
 import pathlib
 import setuptools
 
+from sprockets.mixins import mediatype
 
 REPO_DIR = pathlib.Path(__name__).parent
 
@@ -23,6 +23,7 @@ def read_requirements(name):
 
 setuptools.setup(
     name='sprockets.mixins.mediatype',
+    version=mediatype.__version__,
     description='A mixin for reporting handling content-type/accept headers',
     long_description=REPO_DIR.joinpath('README.rst').read_text(),
     url='https://github.com/sprockets/sprockets.mixins.mediatype',
@@ -41,18 +42,12 @@ setuptools.setup(
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
-    packages=[
-        'sprockets',
-        'sprockets.mixins',
-        'sprockets.mixins.mediatype'
-    ],
+    packages=setuptools.find_packages(),
     install_requires=read_requirements('requires/installation.txt'),
     tests_require=read_requirements('requires/testing.txt'),
     extras_require={
         'msgpack': ['u-msgpack-python>=2.5.0,<3']
     },
-    setup_requires=['setuptools_scm'],
-    use_scm_version=True,
     namespace_packages=['sprockets', 'sprockets.mixins'],
     test_suite='nose.collector',
     python_requires='>=3.7',

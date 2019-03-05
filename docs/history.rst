@@ -1,6 +1,11 @@
 Version History
 ===============
 
+`3.0.1`_ (5 Mar 2019)
+---------------------
+- Set Tornado PIN to >=5, <7
+- Remove setuptools_scm
+
 `3.0.0`_ (4 Dec 2018)
 ---------------------
 - Add MessagePack dependencies to package extras (eg. `pip install sprockets.mixins.mediatype[msgpack]`)
@@ -66,7 +71,8 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.0...HEAD
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.1...HEAD
+.. _3.0.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.0...3.0.1
 .. _3.0.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.2...3.0.0
 .. _2.2.2: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.1...2.2.2
 .. _2.2.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.0...2.2.1
