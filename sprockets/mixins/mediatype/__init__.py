@@ -6,13 +6,13 @@ try:
     from .content import (ContentMixin, ContentSettings,
                           add_binary_content_type, add_text_content_type,
                           set_default_content_type)
-except ImportError as error:  # pragma no cover
+except ImportError as error:  # noqa: F841  # pragma no cover
     def _error_closure(*args, **kwargs):
-        raise error
+        raise error  # noqa: F821
 
     class ErrorClosureClass(object):
         def __init__(self, *args, **kwargs):
-            raise error
+            raise error  # noqa: F821
 
     ContentMixin = ErrorClosureClass
     ContentSettings = ErrorClosureClass
