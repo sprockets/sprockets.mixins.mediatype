@@ -1,2 +1,2 @@
 ietfparse>=1.5.1,<2
-tornado>=5,<6
+tornado>=5,<7

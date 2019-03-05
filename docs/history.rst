@@ -1,6 +1,11 @@
 Version History
 ===============
 
+`3.0.1`_ (5 Mar 2019)
+---------------------
+- Set Tornado PIN to >=5, <7
+- Remove setuptools_scm
+
 `3.0.0`_ (4 Dec 2018)
 ---------------------
 - Add MessagePack dependencies to package extras (eg. `pip install sprockets.mixins.mediatype[msgpack]`)
