@@ -5,10 +5,11 @@ python:
 install:
   - pip install codecov -r requires/development.txt
 script:
+  - flake8
+  - yapf -dr sprockets tests.py setup.py docs
   - nosetests --with-coverage tests.py
   - python setup.py build_sphinx
   - python setup.py check
-  - flake8
 after_success:
   - codecov
 deploy:

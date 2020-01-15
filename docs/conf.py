@@ -1,10 +1,10 @@
 import pkg_resources
 
 needs_sphinx = '1.0'
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.viewcode',
-              'sphinx.ext.intersphinx',
-              'sphinxcontrib.autohttp.tornado']
+extensions = [
+    'sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.intersphinx',
+    'sphinxcontrib.autohttp.tornado'
+]
 master_doc = 'index'
 project = 'sprockets.mixins.mediatype'
 copyright = '2015-2018, AWeber Communications'

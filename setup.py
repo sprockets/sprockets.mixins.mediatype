@@ -34,8 +34,7 @@ setuptools.setup(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
-        'Natural Language :: English',
-        'Operating System :: OS Independent',
+        'Natural Language :: English', 'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -46,9 +45,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=read_requirements('requires/installation.txt'),
     tests_require=read_requirements('requires/testing.txt'),
-    extras_require={
-        'msgpack': ['u-msgpack-python>=2.5.0,<3']
-    },
+    extras_require={'msgpack': ['u-msgpack-python>=2.5.0,<3']},
     namespace_packages=['sprockets', 'sprockets.mixins'],
     test_suite='nose.collector',
     python_requires='>=3.7',

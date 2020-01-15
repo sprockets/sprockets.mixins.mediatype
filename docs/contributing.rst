@@ -34,6 +34,10 @@ chest.  It provides the following commands:
 **./setup.py flake8**
    Run `flake8`_ over the code and report style violations.
 
+**yapf -dr sprockets docs tests.py setup.py**
+   Report style violations.  You can run with ``-ri`` instead of ``-dr``
+   to apply fixes in-place.
+
 If any of the preceding commands give you problems, then you will have to
 fix them **before** your pull request will be accepted.
 
@@ -73,21 +77,15 @@ the `detox`_ utility.  It will run the test suite against all of the
 supported python versions in parallel.  This is essentially what Travis-CI
 will do when you issue a pull request anyway::
 
-   $ env/bin/detox
-   py27 recreate: /.../sprockets.mixins.media_type/build/tox/py27
-   GLOB sdist-make: /.../sprockets.mixins.media_type/setup.py
-   py34 recreate: /.../sprockets.mixins.media_type/build/tox/py34
-   py27 installdeps: -rtest-requirements.txt, mock
-   py34 installdeps: -rtest-requirements.txt
-   py27 inst: /.../sprockets.mixins.media_type/build/tox/dist/sprockets.mixins.media_type-0.0.0.zip
-   py27 runtests: PYTHONHASHSEED='2156646470'
-   py27 runtests: commands[0] | /../sprockets.mixins.media_type/build/tox/py27/bin/nosetests
-   py34 inst: /../sprockets.mixins.media_type/.build/tox/dist/sprockets.mixins.media_type-0.0.0.zip
-   py34 runtests: PYTHONHASHSEED='2156646470'
-   py34 runtests: commands[0] | /.../sprockets.mixins.media_type/build/tox/py34/bin/nosetests
-   _________________________________ summary _________________________________
-     py27: commands succeeded
-     py34: commands succeeded
+   $ env/bin/tox -pauto
+   GLOB sdist-make: /.../sprockets/sprockets.mixins.media_type/setup.py
+   ✔ OK py37 in 2.19 seconds
+   ✔ OK py38 in 2.294 seconds
+   ✔ OK style in 2.766 seconds
+   ______________________________ summary ______________________________
+     py37: commands succeeded
+     py38: commands succeeded
+     style: commands succeeded
      congratulations :)
 
 This is what you want to see.  Now you can make your modifications and keep
