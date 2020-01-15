@@ -5,7 +5,7 @@ python:
 install:
   - pip install codecov -r requires/development.txt
 script:
-  - nosetests
+  - nosetests --with-coverage tests.py
   - python setup.py build_sphinx
   - python setup.py check
   - flake8
