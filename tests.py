@@ -7,7 +7,7 @@ import struct
 import unittest
 import uuid
 
-from tornado import testing
+from tornado import httputil, testing
 import umsgpack
 
 from sprockets.mixins.mediatype import content, handlers, transcoders
@@ -58,6 +58,32 @@ def pack_bytes(payload):
     else:
         prefix = struct.pack('>BI', 0xC6, pl)
     return prefix + payload
+
+
+def create_handler_instance(application, method, url, **kwargs):
+    """Build a handler instance that can be invoked manually.
+
+    :param tornado.web.Application application: application to create the
+        new handler with
+    :param str method: HTTP method to request
+    :param str url: identifies the handler to execute
+    :param kwargs: additional parameters to pass to the request
+    :rtype:
+        tuple[tornado.httputil.HTTPServerRequest,tornado.web.RequestHandler]
+
+    """
+    # build a real request instance
+    request = httputil.HTTPServerRequest(method, url, **kwargs)
+
+    # build a fake connection
+    request.connection = httputil.HTTPConnection()
+    setattr(request.connection, 'set_close_callback', lambda *args: None)
+
+    # let the application find the handler class and create an instance
+    delegate = application.find_handler(request)
+    handler = delegate.handler_class(application, request,
+                                     **delegate.handler_kwargs)
+    return request, handler
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
@@ -128,6 +154,45 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
                               })
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], 'expected/content')
+
+    def test_that_get_response_content_type_caches(self):
+        application = self.get_app()
+        request, handler = create_handler_instance(
+            application, 'GET', '/', headers={'Accept': 'application/msgpack'})
+
+        # Without the cache in place, the second response would be json
+        # since the Accept header has changed
+        ct = handler.get_response_content_type()
+        handler.request.headers.pop('Accept')
+        second_ct = handler.get_response_content_type()
+        self.assertEquals(second_ct, ct)
+
+    def test_that_get_request_body_caches(self):
+        application = self.get_app()
+        request, handler = create_handler_instance(
+            application,
+            'POST',
+            '/',
+            body=umsgpack.packb({"hi": "there"}),
+            headers={'Content-Type': 'application/msgpack'})
+
+        # Without the cache in place, the second call would fail to
+        # decode the request properly.
+        handler.get_request_body()
+        handler.request.headers['Content-Type'] = 'application/json'
+        handler.get_request_body()
+
+    def test_that_send_response_can_not_set_content_type(self):
+        application = self.get_app()
+        request, handler = create_handler_instance(
+            application,
+            'POST',
+            '/',
+            body=b'{}',
+            headers={'Content-Type': 'application/json'})
+        handler._headers.pop('Content-Type', None)  # remove text/html
+        handler.send_response({'hi': 'there'}, set_content_type=False)
+        self.assertNotIn('Content-Type', handler._headers)
 
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
@@ -401,3 +466,15 @@ class MsgPackTranscoderTests(unittest.TestCase):
         dumped = self.transcoder.packb(data)
         self.assertEqual(self.transcoder.unpackb(dumped), data)
         self.assertEqual(dumped, pack_bytes(data))
+
+    def test_that_transcoder_cannot_be_created_without_msgpack(self):
+        saved, transcoders.umsgpack = transcoders.umsgpack, None
+        try:
+            with self.assertRaises(RuntimeError):
+                transcoders.MsgPackTranscoder()
+        finally:
+            transcoders.umsgpack = saved
+
+    def test_that_non_empty_dictionaries(self):
+        dumped = self.transcoder.packb({'one': 'two'})
+        self.assertEquals(dumped, b'\x81\xa3one\xa3two')

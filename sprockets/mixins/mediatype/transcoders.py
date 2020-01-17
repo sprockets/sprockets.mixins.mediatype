@@ -13,7 +13,7 @@ import collections
 
 try:
     import umsgpack
-except ImportError:
+except ImportError:  # pragma: no cover
     umsgpack = None
 
 from sprockets.mixins.mediatype import handlers
