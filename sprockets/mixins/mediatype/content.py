@@ -151,7 +151,7 @@ def get_settings(application, force_instance=False):
     Retrieve the media type settings for a application.
 
     :param tornado.web.Application application:
-    :keyword bool force_instance: if :data:`True` then create the
+    :param bool force_instance: if :data:`True` then create the
         instance if it does not exist
 
     :return: the content settings instance

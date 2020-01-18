@@ -28,9 +28,20 @@ class UTC(datetime.tzinfo):
 
 
 class Context:
-    """Super simple class to call setattr on"""
+    """Looks like a tornado.web.Application."""
     def __init__(self):
         self.settings = {}
+
+
+class FakeContentHandler:
+    """Looks like a BinaryContentHandler or TextContentHandler."""
+    content_type = ''
+
+    def to_bytes(self, _data, _encoding=None) -> (str, bytes):
+        return '', b''
+
+    def from_bytes(self, _data: bytes, _encoding: str = None):
+        return None
 
 
 def pack_string(obj):
@@ -264,16 +275,18 @@ class JSONTranscoderTests(unittest.TestCase):
                          '{"now":"%s"}' % obj['now'].isoformat())
 
     def test_that_bytearrays_are_base64_encoded(self):
-        bin = bytearray(os.urandom(127))
-        dumped = self.transcoder.dumps({'bin': bin})
+        some_bytes = bytearray(os.urandom(127))
+        dumped = self.transcoder.dumps({'bin': some_bytes})
         self.assertEqual(
-            dumped, '{"bin":"%s"}' % base64.b64encode(bin).decode('ASCII'))
+            dumped,
+            '{"bin":"%s"}' % base64.b64encode(some_bytes).decode('ASCII'))
 
     def test_that_memoryviews_are_base64_encoded(self):
-        bin = memoryview(os.urandom(127))
-        dumped = self.transcoder.dumps({'bin': bin})
+        some_bytes = memoryview(os.urandom(127))
+        dumped = self.transcoder.dumps({'bin': some_bytes})
         self.assertEqual(
-            dumped, '{"bin":"%s"}' % base64.b64encode(bin).decode('ASCII'))
+            dumped,
+            '{"bin":"%s"}' % base64.b64encode(some_bytes).decode('ASCII'))
 
     def test_that_unhandled_objects_raise_type_error(self):
         with self.assertRaises(TypeError):
@@ -283,7 +296,7 @@ class JSONTranscoderTests(unittest.TestCase):
 class ContentSettingsTests(unittest.TestCase):
     def test_that_handler_listed_in_available_content_types(self):
         settings = content.ContentSettings()
-        settings['application/json'] = object()
+        settings['application/json'] = FakeContentHandler()
         self.assertEqual(len(settings.available_content_types), 1)
         self.assertEqual(settings.available_content_types[0].content_type,
                          'application')
@@ -292,13 +305,13 @@ class ContentSettingsTests(unittest.TestCase):
 
     def test_that_handler_is_not_overwritten(self):
         settings = content.ContentSettings()
-        settings['application/json'] = handler = object()
-        settings['application/json'] = object()
+        settings['application/json'] = handler = FakeContentHandler()
+        settings['application/json'] = FakeContentHandler()
         self.assertIs(settings.get('application/json'), handler)
 
     def test_that_registered_content_types_are_normalized(self):
         settings = content.ContentSettings()
-        handler = object()
+        handler = FakeContentHandler()
         settings['application/json; VerSion=foo; type=WhatEver'] = handler
         self.assertIs(settings['application/json; type=whatever; version=foo'],
                       handler)
@@ -307,8 +320,9 @@ class ContentSettingsTests(unittest.TestCase):
 
     def test_that_normalized_content_types_do_not_overwrite(self):
         settings = content.ContentSettings()
-        settings['application/json; charset=UTF-8'] = handler = object()
-        settings['application/json; charset=utf-8'] = object()
+        handler = FakeContentHandler()
+        settings['application/json; charset=UTF-8'] = handler
+        settings['application/json; charset=utf-8'] = FakeContentHandler()
         self.assertEqual(len(settings.available_content_types), 1)
         self.assertEqual(settings.available_content_types[0].content_type,
                          'application')

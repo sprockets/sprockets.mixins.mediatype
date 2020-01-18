@@ -78,7 +78,8 @@ class JSONTranscoder(handlers.TextContentHandler):
         """
         return json.loads(str_repr, **self.load_options)
 
-    def dump_object(self, obj):
+    @staticmethod
+    def dump_object(obj):
         """
         Called to encode unrecognized object.
 

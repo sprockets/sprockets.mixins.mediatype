@@ -48,9 +48,6 @@ class BinaryContentHandler:
 
         :param bytes data_bytes: stream of bytes to decode
         :param str encoding: ignored
-        :param dict content_parameters: optional :class:`dict` of
-            content type parameters from the :mailheader:`Content-Type`
-            header
         :returns: decoded :class:`object` instance
 
         """
@@ -108,9 +105,6 @@ class TextContentHandler:
         :param str encoding: character set used to decode the incoming
             bytes before calling the ``loads`` function.  This defaults
             to :attr:`default_encoding`
-        :param dict content_parameters: optional :class:`dict` of
-            content type parameters from the :mailheader:`Content-Type`
-            header
         :returns: decoded :class:`object` instance
 
         """
