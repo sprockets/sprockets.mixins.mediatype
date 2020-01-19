@@ -1,4 +1,7 @@
+include examples.py
 include LICENSE
 include tests.py
+include tox.ini
+
 graft docs
 graft requires

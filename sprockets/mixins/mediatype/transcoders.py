@@ -7,6 +7,7 @@ Bundled media type transcoders.
 """
 import base64
 import json
+import typing
 import uuid
 
 import collections
@@ -16,17 +17,17 @@ try:
 except ImportError:  # pragma: no cover
     umsgpack = None
 
-from sprockets.mixins.mediatype import handlers
+from sprockets.mixins.mediatype import handlers, type_info
 
 
 class JSONTranscoder(handlers.TextContentHandler):
     """
     JSON transcoder instance.
 
-    :param str content_type: the content type that this encoder instance
+    :param content_type: the content type that this encoder instance
         implements. If omitted, ``application/json`` is used. This is
         passed directly to the ``TextContentHandler`` initializer.
-    :param str default_encoding: the encoding to use if none is specified.
+    :param default_encoding: the encoding to use if none is specified.
         If omitted, this defaults to ``utf-8``. This is passed directly to
         the ``TextContentHandler`` initializer.
 
@@ -47,9 +48,12 @@ class JSONTranscoder(handlers.TextContentHandler):
        :meth:`.loads` is called.
 
     """
+    dump_options: typing.MutableMapping[str, typing.Any]
+    load_options: typing.MutableMapping[str, typing.Any]
+
     def __init__(self,
-                 content_type='application/json',
-                 default_encoding='utf-8'):
+                 content_type: str = 'application/json',
+                 default_encoding: str = 'utf-8') -> None:
         super().__init__(content_type, self.dumps, self.loads,
                          default_encoding)
         self.dump_options = {
@@ -58,32 +62,33 @@ class JSONTranscoder(handlers.TextContentHandler):
         }
         self.load_options = {}
 
-    def dumps(self, obj):
+    def dumps(self, obj: type_info.SerializableTypes) -> str:
         """
         Dump a :class:`object` instance into a JSON :class:`str`
 
-        :param object obj: the object to dump
+        :param obj: the object to dump
         :return: the JSON representation of :class:`object`
 
         """
         return json.dumps(obj, **self.dump_options)
 
-    def loads(self, str_repr):
+    def loads(self, str_repr: str) -> type_info.DeserializedType:
         """
         Transform :class:`str` into an :class:`object` instance.
 
-        :param str str_repr: the UNICODE representation of an object
+        :param str_repr: the UNICODE representation of an object
         :return: the decoded :class:`object` representation
 
         """
-        return json.loads(str_repr, **self.load_options)
+        return typing.cast(type_info.DeserializedType,
+                           json.loads(str_repr, **self.load_options))
 
     @staticmethod
-    def dump_object(obj):
+    def dump_object(obj: type_info.SerializablePrimitives) -> str:
         """
         Called to encode unrecognized object.
 
-        :param object obj: the object to encode
+        :param obj: the object to encode
         :return: the encoded object
         :raises TypeError: when `obj` cannot be encoded
 
@@ -110,7 +115,7 @@ class JSONTranscoder(handlers.TextContentHandler):
         if isinstance(obj, uuid.UUID):
             return str(obj)
         if hasattr(obj, 'isoformat'):
-            return obj.isoformat()
+            return typing.cast(type_info.ISOFormattable, obj).isoformat()
         if isinstance(obj, (bytes, bytearray, memoryview)):
             return base64.b64encode(obj).decode('ASCII')
         raise TypeError('{!r} is not JSON serializable'.format(obj))
@@ -120,7 +125,7 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
     """
     Msgpack Transcoder instance.
 
-    :param str content_type: the content type that this encoder instance
+    :param content_type: the content type that this encoder instance
         implements. If omitted, ``application/msgpack`` is used. This
         is passed directly to the ``BinaryContentHandler`` initializer.
 
@@ -133,22 +138,23 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
     """
     PACKABLE_TYPES = (bool, int, float)
 
-    def __init__(self, content_type='application/msgpack'):
+    def __init__(self, content_type: str = 'application/msgpack') -> None:
         if umsgpack is None:
             raise RuntimeError('Cannot import MsgPackTranscoder, '
                                'umsgpack is not available')
 
         super().__init__(content_type, self.packb, self.unpackb)
 
-    def packb(self, data):
+    def packb(self, data: type_info.SerializableTypes) -> bytes:
         """Pack `data` into a :class:`bytes` instance."""
-        return umsgpack.packb(self.normalize_datum(data))
+        return typing.cast(bytes, umsgpack.packb(self.normalize_datum(data)))
 
-    def unpackb(self, data):
+    def unpackb(self, data: bytes) -> type_info.DeserializedType:
         """Unpack a :class:`object` from a :class:`bytes` instance."""
-        return umsgpack.unpackb(data)
+        return typing.cast(type_info.DeserializedType, umsgpack.unpackb(data))
 
-    def normalize_datum(self, datum):
+    def normalize_datum(self,
+                        datum: type_info.SerializableTypes) -> typing.Any:
         """
         Convert `datum` into something that umsgpack likes.
 
@@ -226,7 +232,7 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
             datum = datum.tobytes()
 
         if hasattr(datum, 'isoformat'):
-            datum = datum.isoformat()
+            datum = typing.cast(type_info.ISOFormattable, datum).isoformat()
 
         if isinstance(datum, (bytes, str)):
             return datum

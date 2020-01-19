@@ -35,3 +35,17 @@ Bundled Transcoders
 
 .. autoclass:: MsgPackTranscoder
    :members:
+
+Type Information
+----------------
+.. module:: sprockets.mixins.mediatype.type_info
+
+.. class:: ApplicationProtocol
+.. class:: ContentHandlerProtocol
+.. autodata:: DumpStringFunctionType
+.. class:: ISOFormattable
+.. autodata:: LoadStringFunctionType
+.. autodata:: PackFunctionType
+.. autodata:: SerializablePrimitives
+.. autodata:: SerializableTypes
+.. autodata:: UnpackFunctionType

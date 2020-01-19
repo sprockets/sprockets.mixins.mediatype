@@ -1,6 +1,11 @@
 Version History
 ===============
 
+`Next Release`_
+---------------
+- Add :pep:`484` type annotations
+- Add :mod:`~sprockets.mixins.mediatype.type_info` module
+
 `3.0.1`_ (5 Mar 2019)
 ---------------------
 - Set Tornado PIN to >=5, <7

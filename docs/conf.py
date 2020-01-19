@@ -2,8 +2,11 @@ import pkg_resources
 
 needs_sphinx = '1.0'
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.intersphinx',
-    'sphinxcontrib.autohttp.tornado'
+    'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.viewcode',
+    'sphinx_autodoc_typehints',
+    'sphinxcontrib.autohttp.tornado',
 ]
 master_doc = 'index'
 project = 'sprockets.mixins.mediatype'

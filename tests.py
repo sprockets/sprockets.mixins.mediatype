@@ -98,8 +98,14 @@ def create_handler_instance(application, method, url, **kwargs):
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
+    def setUp(self):
+        self.app = None
+        super().setUp()
+
     def get_app(self):
-        return examples.make_application(debug=True)
+        if self.app is None:
+            self.app = examples.make_application(debug=True)
+        return self.app
 
     def test_that_content_type_default_works(self):
         response = self.fetch('/',
@@ -153,7 +159,7 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
 
     def test_that_accept_header_with_suffix_is_obeyed(self):
         content.add_transcoder(
-            self._app,
+            self.app,
             transcoders.MsgPackTranscoder(content_type='expected/content'),
             'application/vendor+msgpack')
         response = self.fetch('/',
@@ -167,9 +173,8 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         self.assertEqual(response.headers['Content-Type'], 'expected/content')
 
     def test_that_get_response_content_type_caches(self):
-        application = self.get_app()
         request, handler = create_handler_instance(
-            application, 'GET', '/', headers={'Accept': 'application/msgpack'})
+            self.app, 'GET', '/', headers={'Accept': 'application/msgpack'})
 
         # Without the cache in place, the second response would be json
         # since the Accept header has changed
@@ -179,9 +184,8 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         self.assertEquals(second_ct, ct)
 
     def test_that_get_request_body_caches(self):
-        application = self.get_app()
         request, handler = create_handler_instance(
-            application,
+            self.app,
             'POST',
             '/',
             body=umsgpack.packb({"hi": "there"}),
@@ -194,9 +198,8 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         handler.get_request_body()
 
     def test_that_send_response_can_not_set_content_type(self):
-        application = self.get_app()
         request, handler = create_handler_instance(
-            application,
+            self.app,
             'POST',
             '/',
             body=b'{}',
@@ -204,6 +207,18 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         handler._headers.pop('Content-Type', None)  # remove text/html
         handler.send_response({'hi': 'there'}, set_content_type=False)
         self.assertNotIn('Content-Type', handler._headers)
+
+    def test_that_send_response_without_content_type_fails(self):
+        settings = content.get_settings(self.app)
+        settings.default_content_type = None
+        response = self.fetch('/',
+                              method='POST',
+                              body=b'{}',
+                              headers={
+                                  'Accept': 'application/xml',
+                                  'Content-Type': 'application/json'
+                              })
+        self.assertEquals(response.code, 415)
 
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):

@@ -7,7 +7,11 @@ Basic content handlers.
   to text before calling functions that encode & decode text
 
 """
+import typing
+
 from tornado import escape
+
+from . import type_info
 
 
 class BinaryContentHandler:
@@ -24,17 +28,23 @@ class BinaryContentHandler:
     and unpacking functions.
 
     """
-    def __init__(self, content_type, pack, unpack):
+    content_type: str
+
+    def __init__(self, content_type: str, pack: type_info.PackFunctionType,
+                 unpack: type_info.UnpackFunctionType):
         self._pack = pack
         self._unpack = unpack
         self.content_type = content_type
 
-    def to_bytes(self, inst_data, encoding=None):
+    def to_bytes(
+            self,
+            inst_data: type_info.SerializableTypes,
+            encoding: typing.Optional[str] = None) -> typing.Tuple[str, bytes]:
         """
         Transform an object into :class:`bytes`.
 
-        :param object inst_data: object to encode
-        :param str encoding: ignored
+        :param inst_data: object to encode
+        :param encoding: ignored
         :returns: :class:`tuple` of the selected content
             type and the :class:`bytes` representation of
             `inst_data`
@@ -42,12 +52,16 @@ class BinaryContentHandler:
         """
         return self.content_type, self._pack(inst_data)
 
-    def from_bytes(self, data_bytes, encoding=None):
+    def from_bytes(
+        self,
+        data_bytes: bytes,
+        encoding: typing.Optional[str] = None
+    ) -> type_info.DeserializedType:
         """
         Get an object from :class:`bytes`
 
-        :param bytes data_bytes: stream of bytes to decode
-        :param str encoding: ignored
+        :param data_bytes: stream of bytes to decode
+        :param encoding: ignored
         :returns: decoded :class:`object` instance
 
         """
@@ -58,12 +72,12 @@ class TextContentHandler:
     """
     Transcodes between textual and object representations.
 
-    :param str content_type: registered content type
+    :param content_type: registered content type
     :param dumps: function that transforms an object instance
         into a :class:`str`
     :param loads: function that transforms a :class:`str`
         into an object instance
-    :param str default_encoding: encoding to apply when
+    :param default_encoding: encoding to apply when
         transcoding from the underlying body :class:`byte`
         instance
 
@@ -73,18 +87,24 @@ class TextContentHandler:
     that tornado expects.
 
     """
-    def __init__(self, content_type, dumps, loads, default_encoding):
+    def __init__(self, content_type: str,
+                 dumps: type_info.DumpStringFunctionType,
+                 loads: type_info.LoadStringFunctionType,
+                 default_encoding: str):
         self._dumps = dumps
         self._loads = loads
         self.content_type = content_type
         self.default_encoding = default_encoding
 
-    def to_bytes(self, inst_data, encoding=None):
+    def to_bytes(
+            self,
+            inst_data: type_info.SerializableTypes,
+            encoding: typing.Optional[str] = None) -> typing.Tuple[str, bytes]:
         """
         Transform an object into :class:`bytes`.
 
-        :param object inst_data: object to encode
-        :param str encoding: character set used to encode the bytes
+        :param inst_data: object to encode
+        :param encoding: character set used to encode the bytes
             returned from the ``dumps`` function.  This defaults to
             :attr:`default_encoding`
         :returns: :class:`tuple` of the selected content
@@ -97,12 +117,16 @@ class TextContentHandler:
         dumped = self._dumps(escape.recursive_unicode(inst_data))
         return content_type, dumped.encode(selected)
 
-    def from_bytes(self, data, encoding=None):
+    def from_bytes(
+        self,
+        data: bytes,
+        encoding: typing.Optional[str] = None
+    ) -> type_info.DeserializedType:
         """
         Get an object from :class:`bytes`
 
-        :param bytes data: stream of bytes to decode
-        :param str encoding: character set used to decode the incoming
+        :param data: stream of bytes to decode
+        :param encoding: character set used to decode the incoming
             bytes before calling the ``loads`` function.  This defaults
             to :attr:`default_encoding`
         :returns: decoded :class:`object` instance
