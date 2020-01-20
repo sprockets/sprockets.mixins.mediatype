@@ -3,7 +3,7 @@ sprockets.mixins.mediatype
 A mixin that performs Content-Type negotiation and request/response
 (de)serialization.
 
-|Documentation| |Build Badge| |Package Info|
+|Documentation| |Build Badge| |Package Info| |Coverage|
 
 This mix-in adds two methods to a ``tornado.web.RequestHandler`` instance:
 
@@ -99,9 +99,15 @@ Based on the settings stored in the ``Application`` instance and the HTTP
 headers, the request and response data will be handled correctly or the
 appropriate HTTP exceptions will be raised.
 
-.. |Documentation| image:: https://readthedocs.org/projects/sprocketsmixinsmedia-type/badge/?version=latest
-   :target: https://sprocketsmixinsmedia-type.readthedocs.org/
-.. |Build Badge| image:: https://travis-ci.org/sprockets/sprockets.mixins.mediatype.svg
+.. |Documentation| image:: https://img.shields.io/readthedocs/sprocketsmixinsmedia-type
+   :alt: Read the Docs
+   :target: https://sprocketsmixinsmedia-type.readthedocs.io/en/latest/
+.. |Build Badge| image:: https://img.shields.io/travis/sprockets/sprockets.mixins.mediatype
+   :alt: travis-ci.org
    :target: https://travis-ci.org/sprockets/sprockets.mixins.mediatype
+.. |Coverage| image:: https://img.shields.io/codecov/c/github/sprockets/sprockets.mixins.mediatype
+   :alt: codecov
+   :target: https://codecov.io/gh/sprockets/sprockets.mixins.mediatype
 .. |Package Info| image:: https://img.shields.io/pypi/v/sprockets.mixins.mediatype.svg
-   :target: https://pypi.python.org/pypi/sprockets.mixins.mediatype
+   :alt: pypi.org
+   :target: https://pypi.org/project/sprockets.mixins.mediatype

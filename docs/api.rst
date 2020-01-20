@@ -4,6 +4,8 @@ API Documentation
 
 Content Type Handling
 ---------------------
+.. autodata:: SETTINGS_KEY
+
 .. autoclass:: ContentMixin
    :members:
 

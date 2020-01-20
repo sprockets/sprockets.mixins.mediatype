@@ -156,58 +156,57 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         :raises TypeError: if `datum` cannot be packed
 
         This message is called by :meth:`.packb` to recursively normalize
-        an input value before passing it to :func:`umsgpack.packb`.  Values
+        an input value before passing it to `umsgpack.packb`.  Values
         are normalized according to the following table.
 
-        +-------------------------------+-------------------------------+
-        | **Value**                     | **MsgPack Family**            |
-        +-------------------------------+-------------------------------+
-        | :data:`None`                  | `nil byte`_ (0xC0)            |
-        +-------------------------------+-------------------------------+
-        | :data:`True`                  | `true byte`_ (0xC3)           |
-        +-------------------------------+-------------------------------+
-        | :data:`False`                 | `false byte`_ (0xC2)          |
-        +-------------------------------+-------------------------------+
-        | :class:`int`                  | `integer family`_             |
-        +-------------------------------+-------------------------------+
-        | :class:`float`                | `float family`_               |
-        +-------------------------------+-------------------------------+
-        | String                        | `str family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`bytes`                | `bin family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`bytearray`            | `bin family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`memoryview`           | `bin family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`collections.Sequence` | `array family`_               |
-        +-------------------------------+-------------------------------+
-        | :class:`collections.Set`      | `array family`_               |
-        +-------------------------------+-------------------------------+
-        | :class:`collections.Mapping`  | `map family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`uuid.UUID`            | Converted to String           |
-        +-------------------------------+-------------------------------+
+        +-----------------------------------+-------------------------------+
+        | Value Type                        | MsgPack Family                |
+        +===================================+===============================+
+        | :data:`None`                      | `nil byte`_ (``0xC0``)        |
+        +-----------------------------------+-------------------------------+
+        | :data:`True`                      | `true byte`_ (``0xC3``)       |
+        +-----------------------------------+-------------------------------+
+        | :data:`False`                     | `false byte`_ (``0xC2``)      |
+        +-----------------------------------+-------------------------------+
+        | :class:`int`                      | `integer family`_             |
+        +-----------------------------------+-------------------------------+
+        | :class:`float`                    | `float family`_               |
+        +-----------------------------------+-------------------------------+
+        | String                            | `str family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`bytes`                    | `bin family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`bytearray`                | `bin family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`memoryview`               | `bin family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`collections.abc.Sequence` | `array family`_               |
+        +-----------------------------------+-------------------------------+
+        | :class:`collections.abc.Set`      | `array family`_               |
+        +-----------------------------------+-------------------------------+
+        | :class:`collections.abc.Mapping`  | `map family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`uuid.UUID`                | Converted to String           |
+        +-----------------------------------+-------------------------------+
 
         .. _nil byte: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
         .. _true byte: https://github.com/msgpack/msgpack/blob/
-           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#bool-format-family
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-bool
         .. _false byte: https://github.com/msgpack/msgpack/blob/
-           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#bool-format-family
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-bool
         .. _integer family: https://github.com/msgpack/msgpack/blob/
-           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#int-format-family
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-int
         .. _float family: https://github.com/msgpack/msgpack/blob/
-           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#float-format-family
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-float
         .. _str family: https://github.com/msgpack/msgpack/blob/
-           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#str-format-family
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-str
         .. _array family: https://github.com/msgpack/msgpack/blob/
-           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#array-format-family
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-array
         .. _map family: https://github.com/msgpack/msgpack/blob/
-           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md
-           #mapping-format-family
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-map
         .. _bin family: https://github.com/msgpack/msgpack/blob/
-           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#bin-format-family
+           0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-bin
 
         """
         if datum is None:

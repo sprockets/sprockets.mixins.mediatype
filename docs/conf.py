@@ -21,14 +21,13 @@ html_theme_options = {
     'github_repo': 'sprockets.mixins.mediatype',
     'description': 'Content-Type negotation mix-in',
     'github_banner': True,
-    'travis_button': True,
     'sidebar_width': '230px',
-    'codecov_button': True,
 }
 
 intersphinx_mapping = {
+    'ietfparse': ('https://ietfparse.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3', None),
-    'requests': ('https://requests.readthedocs.org/en/latest/', None),
-    'sprockets': ('https://sprockets.readthedocs.org/en/latest/', None),
-    'tornado': ('http://tornadoweb.org/en/latest/', None),
+    'requests': ('https://requests.readthedocs.io/en/latest/', None),
+    'sprockets': ('https://sprockets.readthedocs.io/en/latest/', None),
+    'tornado': ('https://www.tornadoweb.org/en/latest/', None),
 }

@@ -12,7 +12,7 @@ Version History
 - Update to minimum of ietfparse 1.5.1
 - Drop support for Python < 3.7
 - Drop support for Tornado < 5
-- Remove deprecated :meth:`sprockets.mixins.mediatype.content.ContentSettings.from_application`.
+- Remove deprecated `sprockets.mixins.mediatype.content.ContentSettings.from_application`.
 
 `2.2.2`_ (7 Apr 2018)
 ---------------------
@@ -21,13 +21,13 @@ Version History
 
 `2.2.1`_ (12 Apr 2018)
 ----------------------
-- Pin :mod:`ietfparse` to avoid breakages introduced in 1.5.0.
+- Pin ietfparse to avoid breakages introduced in 1.5.0.
 
 `2.2.0`_ (7 Jun 2017)
 ---------------------
 - Add :func:`sprockets.mixins.mediatype.content.install`.
 - Add :func:`sprockets.mixins.mediatype.content.get_settings`.
-- Deprecate :meth:`sprockets.mixins.mediatype.content.ContentSettings.from_application`.
+- Deprecate `sprockets.mixins.mediatype.content.ContentSettings.from_application`.
 - Update to ietfparse 1.4.
 
 `2.1.0`_ (16 Mar 2016)
@@ -46,7 +46,7 @@ Version History
 - Add :func:`sprockets.mixins.mediatype.content.add_transcoder`.
 - Add :class:`sprockets.mixins.mediatype.transcoders.JSONTranscoder`.
 - Add :class:`sprockets.mixins.mediatype.transcoders.MsgPackTranscoder`.
-- Add :class:`sprockets.mixins.mediatype.transcoders.BinaryWrapper`.
+- Add `sprockets.mixins.mediatype.transcoders.BinaryWrapper`.
 - Normalize registered MIME types.
 - Raise a 400 status when content body decoding fails.
 
@@ -75,8 +75,8 @@ Version History
 .. _3.0.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.0...3.0.1
 .. _3.0.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.2...3.0.0
 .. _2.2.2: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.1...2.2.2
-.. _2.2.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.0...2.2.1
-.. _2.2.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.1.0...2.2.0
+.. _2.2.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/1d00459...2.2.1
+.. _2.2.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.1.0...1d00459
 .. _2.1.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.0.1...2.1.0
 .. _2.0.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.0.0...2.0.1
 .. _2.0.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/1.0.4...2.0.0

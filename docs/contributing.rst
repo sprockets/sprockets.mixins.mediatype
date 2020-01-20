@@ -102,9 +102,9 @@ to github and issue a pull request.  Describe your changes in the request,
 if Travis isn't too annoyed someone will review it, and eventually merge
 it back.
 
-.. _flake8: http://flake8.readthedocs.org/
-.. _nose: http://nose.readthedocs.org/
-.. _sphinx: http://sphinx-doc.org/
-.. _detox: http://testrun.org/tox/
-.. _tox: http://testrun.org/tox/
-.. _virtualenv: http://virtualenv.pypa.io/
+.. _flake8: https://flake8.readthedocs.io/en/latest/
+.. _nose: https://nose.readthedocs.io/en/latest/
+.. _sphinx: https://www.sphinx-doc.org/en/master/
+.. _detox: https://tox.readthedocs.io/en/latest/
+.. _tox: https://tox.readthedocs.io/en/latest/
+.. _virtualenv: https://virtualenv.pypa.io/en/latest/

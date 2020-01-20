@@ -128,8 +128,10 @@ def install(application, default_content_type, encoding=None):
 
     :param tornado.web.Application application: the application to
         install a :class:`.ContentSettings` object into.
-    :param str|NoneType default_content_type:
-    :param str|NoneType encoding:
+    :param default_content_type: default content type
+    :type default_content_type: str or None
+    :param encoding: default encoding
+    :type encoding: str or None
 
     :returns: the content settings instance
     :rtype: sprockets.mixins.mediatype.content.ContentSettings
@@ -248,7 +250,8 @@ def set_default_content_type(application, content_type, encoding=None):
 
     :param tornado.web.Application application: the application to modify
     :param str content_type: the content type to default to
-    :param str|None encoding: encoding to use when one is unspecified
+    :param str encoding: encoding to use when one is unspecified
+    :type encoding: str or None
 
     """
     settings = get_settings(application, force_instance=True)
@@ -307,7 +310,8 @@ class ContentMixin:
         """
         Fetch (and cache) the request body as a dictionary.
 
-        :raise web.HTTPError:
+        :raises: :exc:`tornado.web.HTTPError`
+
             - if the content type cannot be matched, then the status code
               is set to 415 Unsupported Media Type.
             - if decoding the content body fails, then the status code is
