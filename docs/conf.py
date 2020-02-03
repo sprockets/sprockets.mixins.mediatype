@@ -5,7 +5,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
-    'sphinx_autodoc_typehints',
     'sphinxcontrib.autohttp.tornado',
 ]
 master_doc = 'index'
@@ -26,6 +25,10 @@ html_theme_options = {
     'github_banner': True,
     'sidebar_width': '230px',
 }
+
+# https://github.com/agronholm/sphinx-autodoc-typehints
+extensions.append('sphinx_autodoc_typehints')
+autodoc_type_hints = 'none'
 
 intersphinx_mapping = {
     'ietfparse': ('https://ietfparse.readthedocs.io/en/latest/', None),

@@ -120,6 +120,14 @@ class ContentSettings:
         content_type: str,
         default: typing.Optional[type_info.ContentHandlerProtocol] = None
     ) -> typing.Union[None, type_info.ContentHandlerProtocol]:
+        """Retrieve the content handler for `content_type`.
+
+        :param str content_type: content type to search for
+        :param type_info.ContentHandlerProtocol default: optional value
+            to return when the content type is not matched
+        :rtype: type_info.ContentHandlerProtocol
+
+        """
         return self._handlers.get(content_type, default)
 
     @property
@@ -141,10 +149,12 @@ def install(application: type_info.ApplicationProtocol,
     """
     Install the media type management settings.
 
-    :param application: the application to
+    :param type_info.ApplicationProtocol application: the application to
         install a :class:`.ContentSettings` object into.
-    :param default_content_type:
-    :param encoding: default encoding
+    :param str default_content_type: content type to use in responses
+        when no :http:header:`Accept` header is present
+    :param str encoding: content encoding/charset to use in responses
+        when no :http:header:`Accept-Charset` header is present
 
     :returns: the content settings instance
 
@@ -189,8 +199,9 @@ def get_settings(
     """
     Retrieve the media type settings for a application.
 
-    :param application: application to fetch the settings for
-    :param force_instance: if :data:`True` then create the
+    :param type_info.ApplicationProtocol application: application
+        to fetch the settings for
+    :param bool force_instance: if :data:`True` then create the
         instance if it does not exist
 
     :return: the content settings instance
@@ -211,12 +222,15 @@ def add_binary_content_type(application: type_info.ApplicationProtocol,
     """
     Add handler for a binary content type.
 
-    :param application: the application to modify
-    :param content_type: the content type to add
-    :param pack: function that packs a dictionary to a byte string.
-        ``pack(dict) -> bytes``
+    :param type_info.ApplicationProtocol application:
+        the application to modify
+    :param str content_type: the content type to add
+    :param pack: function that packs a python instance into a
+        byte string.
+    :type pack: type_info.PackFunctionType
     :param unpack: function that takes a byte string and returns a
-        dictionary.  ``unpack(bytes) -> dict``
+        python instance
+    :type unpack: type_info.UnpackFunctionType
 
     """
     add_transcoder(application,
@@ -230,13 +244,14 @@ def add_text_content_type(application: type_info.ApplicationProtocol,
     """
     Add handler for a text content type.
 
-    :param application: the application to modify
-    :param content_type: the content type to add
-    :param default_encoding: encoding to use when one is unspecified
-    :param dumps: function that dumps a dictionary to a string.
-        ``dumps(dict, encoding:str) -> str``
-    :param loads: function that loads a dictionary from a string.
-        ``loads(str, encoding:str) -> dict``
+    :param type_info.ApplicationProtocol application:
+        the application to modify
+    :param str content_type: the content type to add
+    :param str default_encoding: encoding to use when one is unspecified
+    :param dumps: function that dumps a python instance into a string.
+    :type dumps: type_info.DumpStringFunctionType
+    :param loads: function that loads a python instance from a string.
+    :type loads: type_info.LoadStringFunctionType
 
     Note that the ``charset`` parameter is stripped from `content_type`
     if it is present.
@@ -257,32 +272,13 @@ def add_transcoder(application: type_info.ApplicationProtocol,
     """
     Register a transcoder for a specific content type.
 
-    :param application: the application to modify
-    :param transcoder: object that translates between :class:`bytes` and
-        :class:`object` instances
-    :param content_type: the content type to add.  If this is
+    :param type_info.ApplicationProtocol application:
+        the application to modify
+    :param type_info.ContentHandlerProtocol transcoder:
+        object that translates between :class:`bytes` and Python instances
+    :param str content_type: the content type to add.  If this is
         unspecified or :data:`None`, then the transcoder's ``content_type``
         attribute is used.
-
-    The `transcoder` instance is required to implement the following
-    simple protocol:
-
-    .. attribute:: transcoder.content_type
-
-       :class:`str` that identifies the MIME type that the transcoder
-       implements.
-
-    .. method:: transcoder.to_bytes(inst_data, encoding=None) -> bytes
-
-       :param object inst_data: the object to encode
-       :param str encoding: character encoding to apply or :data:`None`
-       :returns: the encoded :class:`bytes` instance
-
-    .. method:: transcoder.from_bytes(data_bytes, encoding=None) -> object
-
-       :param bytes data_bytes: the :class:`bytes` instance to decode
-       :param str encoding: character encoding to use or :data:`None`
-       :returns: the decoded :class:`object` instance
 
     """
     settings = get_settings(application, force_instance=True)
@@ -295,9 +291,10 @@ def set_default_content_type(application: type_info.ApplicationProtocol,
     """
     Store the default content type for an application.
 
-    :param application: the application to modify
-    :param content_type: the content type to default to
-    :param encoding: encoding to use when one is unspecified
+    :param type_info.ApplicationProtocol application:
+        the application to modify
+    :param str content_type: the content type to default to
+    :param str encoding: encoding to use when one is unspecified
 
     """
     settings = get_settings(application, force_instance=True)
@@ -335,9 +332,14 @@ class ContentMixin(web.RequestHandler):
         self._logger = getattr(self, 'logger', logger)
 
     def get_response_content_type(self) -> typing.Optional[str]:
-        """Figure out what content type will be used in the response."""
-        # NB - will return `None` if there is no match AND the default
-        # content type for the application is not set
+        """Figure out what content type will be used in the response.
+
+        :rtype: str or None
+
+        This method will return :data:`None` if there is no match AND
+        the default content type for the application is not set.
+
+        """
         if self._best_response_match is None:
             settings = get_settings(self.application, force_instance=True)
             acceptable = headers.parse_accept(
@@ -361,6 +363,7 @@ class ContentMixin(web.RequestHandler):
         """
         Fetch (and cache) the request body.
 
+        :rtype: type_info.DeserializedType
         :raises: :exc:`tornado.web.HTTPError`
 
             - if the content type cannot be matched, then the status code
@@ -402,7 +405,8 @@ class ContentMixin(web.RequestHandler):
         Serialize and send ``body`` in the response.
 
         :param body: the body to serialize
-        :param set_content_type: should the :http:header:`Content-Type`
+        :type body: type_info.SerializableTypes
+        :param bool set_content_type: should the :http:header:`Content-Type`
             header be set?  Defaults to :data:`True`
 
         :raises: a :http:statuscode:`415` :exc:`tornado.web.HTTPError`
