@@ -66,7 +66,7 @@ class JSONTranscoder(handlers.TextContentHandler):
         """
         Dump a :class:`object` instance into a JSON :class:`str`
 
-        :param obj: the object to dump
+        :param type_info.SerializableTypes obj: the object to dump
         :return: the JSON representation of :class:`object`
 
         """
@@ -78,6 +78,7 @@ class JSONTranscoder(handlers.TextContentHandler):
 
         :param str_repr: the UNICODE representation of an object
         :return: the decoded :class:`object` representation
+        :rtype: type_info.DeserializedType
 
         """
         return typing.cast(type_info.DeserializedType,
@@ -88,7 +89,8 @@ class JSONTranscoder(handlers.TextContentHandler):
         """
         Called to encode unrecognized object.
 
-        :param obj: the object to encode
+        :param type_info.SerializablePrimitives obj:
+            the object to encode
         :return: the encoded object
         :raises TypeError: when `obj` cannot be encoded
 
@@ -150,7 +152,13 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         return typing.cast(bytes, umsgpack.packb(self.normalize_datum(data)))
 
     def unpackb(self, data: bytes) -> type_info.DeserializedType:
-        """Unpack a :class:`object` from a :class:`bytes` instance."""
+        """Unpack a :class:`object` from a :class:`bytes` instance.
+
+        :param data: string of bytes to decode
+        :returns: the instance represented by `data`
+        :rtype: type_info.DeserializedType
+
+        """
         return typing.cast(type_info.DeserializedType, umsgpack.unpackb(data))
 
     def normalize_datum(self,
@@ -158,8 +166,10 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         """
         Convert `datum` into something that umsgpack likes.
 
-        :param datum: something that we want to process with umsgpack
+        :param type_info.SerializableTypes datum: something that we
+            want to process with umsgpack
         :return: a packable version of `datum`
+        :rtype: object
         :raises TypeError: if `datum` cannot be packed
 
         This message is called by :meth:`.packb` to recursively normalize

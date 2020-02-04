@@ -19,10 +19,10 @@ class BinaryContentHandler:
     Pack and unpack binary types.
 
     :param str content_type: registered content type
-    :param pack: function that transforms an object instance
-        into :class:`bytes`
-    :param unpack: function that transforms :class:`bytes`
-        into an object instance
+    :param type_info.PackFunctionType pack: function that transforms
+        an object instance into :class:`bytes`
+    :param type_info.UnpackFunctionType unpack: function that transforms
+        :class:`bytes` into an object instance
 
     This transcoder is a thin veneer around a pair of packing
     and unpacking functions.
@@ -43,7 +43,7 @@ class BinaryContentHandler:
         """
         Transform an object into :class:`bytes`.
 
-        :param inst_data: object to encode
+        :param type_info.SerializableTypes inst_data: object to encode
         :param encoding: ignored
         :returns: :class:`tuple` of the selected content
             type and the :class:`bytes` representation of
@@ -63,6 +63,7 @@ class BinaryContentHandler:
         :param data_bytes: stream of bytes to decode
         :param encoding: ignored
         :returns: decoded :class:`object` instance
+        :rtype: type_info.DeserializedType
 
         """
         return self._unpack(data_bytes)
@@ -73,10 +74,10 @@ class TextContentHandler:
     Transcodes between textual and object representations.
 
     :param content_type: registered content type
-    :param dumps: function that transforms an object instance
-        into a :class:`str`
-    :param loads: function that transforms a :class:`str`
-        into an object instance
+    :param type_info.DumpStringFunctionType dumps: function that
+        transforms an object instance into a :class:`str`
+    :param type_info.LoadStringFunctionType loads: function that
+        transforms a :class:`str` into an object instance
     :param default_encoding: encoding to apply when
         transcoding from the underlying body :class:`byte`
         instance
@@ -103,7 +104,7 @@ class TextContentHandler:
         """
         Transform an object into :class:`bytes`.
 
-        :param inst_data: object to encode
+        :param type_info.SerializableTypes inst_data: object to encode
         :param encoding: character set used to encode the bytes
             returned from the ``dumps`` function.  This defaults to
             :attr:`default_encoding`
@@ -130,6 +131,7 @@ class TextContentHandler:
             bytes before calling the ``loads`` function.  This defaults
             to :attr:`default_encoding`
         :returns: decoded :class:`object` instance
+        :rtype: type_info.DeserializedType
 
         """
         return self._loads(data.decode(encoding or self.default_encoding))
