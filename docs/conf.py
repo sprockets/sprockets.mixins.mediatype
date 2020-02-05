@@ -13,22 +13,13 @@ copyright = '2015-2018, AWeber Communications'
 release = pkg_resources.get_distribution('sprockets.mixins.mediatype').version
 version = '.'.join(release.split('.')[0:1])
 
-html_style = 'custom.css'
-html_static_path = ['static']
-html_sidebars = {
-    '**': ['about.html', 'navigation.html'],
-}
-html_theme_options = {
-    'github_user': 'sprockets',
-    'github_repo': 'sprockets.mixins.mediatype',
-    'description': 'Content-Type negotation mix-in',
-    'github_banner': True,
-    'sidebar_width': '230px',
-}
+html_static_path = ['_static']
+html_css_files = ['css/custom.css']
+html_theme = 'sphinx_rtd_theme'
+html_theme_options = {}
 
 # https://github.com/agronholm/sphinx-autodoc-typehints
 extensions.append('sphinx_autodoc_typehints')
-autodoc_type_hints = 'none'
 
 intersphinx_mapping = {
     'ietfparse': ('https://ietfparse.readthedocs.io/en/latest/', None),
