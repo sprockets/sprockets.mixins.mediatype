@@ -8,7 +8,7 @@ import unittest
 import uuid
 
 from tornado import testing
-import umsgpack
+import msgpack
 
 from sprockets.mixins.mediatype import content, handlers, transcoders
 import examples
@@ -89,14 +89,14 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
                          'application/msgpack')
 
     def test_that_default_content_type_is_set_on_response(self):
-        response = self.fetch('/', method='POST', body=umsgpack.packb({}),
+        response = self.fetch('/', method='POST', body=msgpack.packb({}),
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'],
                          'application/json; charset="utf-8"')
 
     def test_that_vary_header_is_set(self):
-        response = self.fetch('/', method='POST', body=umsgpack.packb({}),
+        response = self.fetch('/', method='POST', body=msgpack.packb({}),
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Vary'], 'Accept')
@@ -133,7 +133,7 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
                 'utf8': '\u2731'
             }
         }
-        response = self.fetch('/', method='POST', body=umsgpack.packb(body),
+        response = self.fetch('/', method='POST', body=msgpack.packb(body),
                               headers={'Content-Type': 'application/msgpack'})
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body.decode('utf-8')), body)
