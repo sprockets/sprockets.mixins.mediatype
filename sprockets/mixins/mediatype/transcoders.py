@@ -12,9 +12,9 @@ import uuid
 import collections
 
 try:
-    import umsgpack
+    import msgpack
 except ImportError:
-    umsgpack = None
+    msgpack = None
 
 from sprockets.mixins.mediatype import handlers
 
@@ -123,40 +123,40 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         implements. If omitted, ``application/msgpack`` is used. This
         is passed directly to the ``BinaryContentHandler`` initializer.
 
-    This transcoder uses the `umsgpack`_ library to encode and decode
+    This transcoder uses the `msgpack`_ library to encode and decode
     objects according to the `msgpack format`_.
 
-    .. _umsgpack: https://github.com/vsergeev/u-msgpack-python
+    .. _msgpack: https://github.com/msgpack/msgpack-python
     .. _msgpack format: http://msgpack.org/index.html
 
     """
     PACKABLE_TYPES = (bool, int, float)
 
     def __init__(self, content_type='application/msgpack'):
-        if umsgpack is None:
+        if msgpack is None:
             raise RuntimeError('Cannot import MsgPackTranscoder, '
-                               'umsgpack is not available')
+                               'msgpack is not available')
 
         super().__init__(content_type, self.packb, self.unpackb)
 
     def packb(self, data):
         """Pack `data` into a :class:`bytes` instance."""
-        return umsgpack.packb(self.normalize_datum(data))
+        return msgpack.packb(self.normalize_datum(data))
 
     def unpackb(self, data):
         """Unpack a :class:`object` from a :class:`bytes` instance."""
-        return umsgpack.unpackb(data)
+        return msgpack.unpackb(data)
 
     def normalize_datum(self, datum):
         """
-        Convert `datum` into something that umsgpack likes.
+        Convert `datum` into something that msgpack likes.
 
-        :param datum: something that we want to process with umsgpack
+        :param datum: something that we want to process with msgpack
         :return: a packable version of `datum`
         :raises TypeError: if `datum` cannot be packed
 
         This message is called by :meth:`.packb` to recursively normalize
-        an input value before passing it to :func:`umsgpack.packb`.  Values
+        an input value before passing it to :func:`msgpack.packb`.  Values
         are normalized according to the following table.
 
         +-------------------------------+-------------------------------+
