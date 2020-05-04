@@ -23,7 +23,7 @@ except ImportError as error:  # pragma no cover
     set_default_content_type = _error_closure
 
 
-version_info = (2, 2, 2)
+version_info = (2, 2, 3)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['ContentMixin', 'ContentSettings', 'add_binary_content_type',
            'add_text_content_type', 'set_default_content_type',

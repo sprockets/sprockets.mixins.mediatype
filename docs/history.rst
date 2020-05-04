@@ -1,6 +1,11 @@
 Version History
 ===============
 
+`2.2.3`_ (4 May 2020)
+---------------------
+- Do not print tracebacks when failing to parse request body.
+  This is a backport of https://github.com/sprockets/sprockets.mixins.mediatype/pull/26
+
 `2.2.2`_ (7 Apr 2018)
 ---------------------
 - Add support for Python 3.5 throug 3.7
