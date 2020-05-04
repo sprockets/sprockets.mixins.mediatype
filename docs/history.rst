@@ -1,6 +1,10 @@
 Version History
 ===============
 
+`3.0.2`_ (4 May 2020)
+---------------------
+- Do not log tracebacks when decoding the request body fails
+
 `3.0.1`_ (5 Mar 2019)
 ---------------------
 - Set Tornado PIN to >=5, <7
@@ -71,7 +75,8 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.1...HEAD
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.2...HEAD
+.. _3.0.2: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.1...3.0.2
 .. _3.0.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.0...3.0.1
 .. _3.0.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.2...3.0.0
 .. _2.2.2: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.1...2.2.2
