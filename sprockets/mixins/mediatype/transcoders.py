@@ -159,35 +159,35 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         an input value before passing it to :func:`umsgpack.packb`.  Values
         are normalized according to the following table.
 
-        +-------------------------------+-------------------------------+
-        | **Value**                     | **MsgPack Family**            |
-        +-------------------------------+-------------------------------+
-        | :data:`None`                  | `nil byte`_ (0xC0)            |
-        +-------------------------------+-------------------------------+
-        | :data:`True`                  | `true byte`_ (0xC3)           |
-        +-------------------------------+-------------------------------+
-        | :data:`False`                 | `false byte`_ (0xC2)          |
-        +-------------------------------+-------------------------------+
-        | :class:`int`                  | `integer family`_             |
-        +-------------------------------+-------------------------------+
-        | :class:`float`                | `float family`_               |
-        +-------------------------------+-------------------------------+
-        | String                        | `str family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`bytes`                | `bin family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`bytearray`            | `bin family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`memoryview`           | `bin family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`collections.Sequence` | `array family`_               |
-        +-------------------------------+-------------------------------+
-        | :class:`collections.Set`      | `array family`_               |
-        +-------------------------------+-------------------------------+
-        | :class:`collections.Mapping`  | `map family`_                 |
-        +-------------------------------+-------------------------------+
-        | :class:`uuid.UUID`            | Converted to String           |
-        +-------------------------------+-------------------------------+
+        +-----------------------------------+-------------------------------+
+        | **Value**                         | **MsgPack Family**            |
+        +-----------------------------------+-------------------------------+
+        | :data:`None`                      | `nil byte`_ (0xC0)            |
+        +-----------------------------------+-------------------------------+
+        | :data:`True`                      | `true byte`_ (0xC3)           |
+        +-----------------------------------+-------------------------------+
+        | :data:`False`                     | `false byte`_ (0xC2)          |
+        +-----------------------------------+-------------------------------+
+        | :class:`int`                      | `integer family`_             |
+        +-----------------------------------+-------------------------------+
+        | :class:`float`                    | `float family`_               |
+        +-----------------------------------+-------------------------------+
+        | String                            | `str family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`bytes`                    | `bin family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`bytearray`                | `bin family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`memoryview`               | `bin family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`collections.abc.Sequence` | `array family`_               |
+        +-----------------------------------+-------------------------------+
+        | :class:`collections.abc.Set`      | `array family`_               |
+        +-----------------------------------+-------------------------------+
+        | :class:`collections.abc.Mapping`  | `map family`_                 |
+        +-----------------------------------+-------------------------------+
+        | :class:`uuid.UUID`                | Converted to String           |
+        +-----------------------------------+-------------------------------+
 
         .. _nil byte: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
@@ -231,10 +231,10 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         if isinstance(datum, (bytes, str)):
             return datum
 
-        if isinstance(datum, (collections.Sequence, collections.Set)):
+        if isinstance(datum, (collections.abc.Sequence, collections.abc.Set)):
             return [self.normalize_datum(item) for item in datum]
 
-        if isinstance(datum, collections.Mapping):
+        if isinstance(datum, collections.abc.Mapping):
             out = {}
             for k, v in datum.items():
                 out[k] = self.normalize_datum(v)
