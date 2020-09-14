@@ -15,18 +15,32 @@ environment for your endeavors::
 
 Don't worry about writing code against previous versions of Python unless
 you you don't have a choice.  That is why we run our tests through `tox`_.
-If you don't have a choice, then install `virtualenv`_ to create the
-environment instead.  The next step is to install the development tools
-that this project uses.  These are listed in *requires/development.txt*::
+The next step is to install the development tools that this project uses.
+These are listed in *requires/development.txt*::
 
    $ env/bin/pip install -qr requires/development.txt
 
 At this point, you will have everything that you need to develop at your
-disposal.  *setup.py* is the swiss-army knife in your development tool
-chest.  It provides the following commands:
+disposal.  Use the unittest runner to run the test suite or the coverage
+utility to run the suite with coverage calculation enabled::
 
-**./setup.py nosetests**
-   Run the test suite using `nose`_ and generate a nice coverage report.
+   $ coverage run -m unittest
+   $ coverage report
+
+You can also run the tox utility to verify the supported Python versions::
+
+   $ tox -p auto
+   ✔ OK py37 in 2.636 seconds
+   ✔ OK py38 in 2.661 seconds
+   ✔ OK py39 in 2.705 seconds
+   _________________________________________________________________________
+     py37: commands succeeded
+     py38: commands succeeded
+     py39: commands succeeded
+     congratulations :)
+
+For other commands, *setup.py* is the swiss-army knife in your development
+tool chest.  It provides the following commands:
 
 **./setup.py build_sphinx**
    Generate the documentation using `sphinx`_.
@@ -40,54 +54,23 @@ fix them **before** your pull request will be accepted.
 Running Tests
 -------------
 The easiest (and quickest) way to run the test suite is to use the
-*nosetests* command.  It will run the test suite against the currently
-installed python version and report not only the test result but the
-test coverage as well::
+unittest runner::
 
-   $ ./setup.py nosetests
-
-   running nosetests
-   running egg_info
-   writing dependency_links to sprockets.mixins.media_type.egg-info/dependency_links.txt
-   writing top-level names to sprockets.mixins.media_type.egg-info/top_level.txt
-   writing sprockets.mixins.media_type.egg-info/PKG-INFO
-   reading manifest file 'sprockets.mixins.media_type.egg-info/SOURCES.txt'
-   reading manifest template 'MANIFEST.in'
-   warning: no previously-included files matching '__pycache__'...
-   warning: no previously-included files matching '*.swp' found ...
-   writing manifest file 'sprockets.mixins.media_type.egg-info/SOURCES.txt'
-   ...
-
-   Name                       Stmts   Miss Branch BrMiss  Cover   Missing
-   ----------------------------------------------------------------------
-   ...
-   ----------------------------------------------------------------------
-   TOTAL                         95      2     59      2    97%
-   ----------------------------------------------------------------------
-   Ran 44 tests in 0.054s
-
-   OK
+   $ python -m unittest tests
 
 That's the quick way to run tests.  The slightly longer way is to run
-the `detox`_ utility.  It will run the test suite against all of the
-supported python versions in parallel.  This is essentially what Travis-CI
+the `tox`_ utility.  It will run the test suite against all of the supported
+python versions in parallel.  This is essentially what Travis-CI
 will do when you issue a pull request anyway::
 
-   $ env/bin/detox
-   py27 recreate: /.../sprockets.mixins.media_type/build/tox/py27
-   GLOB sdist-make: /.../sprockets.mixins.media_type/setup.py
-   py34 recreate: /.../sprockets.mixins.media_type/build/tox/py34
-   py27 installdeps: -rtest-requirements.txt, mock
-   py34 installdeps: -rtest-requirements.txt
-   py27 inst: /.../sprockets.mixins.media_type/build/tox/dist/sprockets.mixins.media_type-0.0.0.zip
-   py27 runtests: PYTHONHASHSEED='2156646470'
-   py27 runtests: commands[0] | /../sprockets.mixins.media_type/build/tox/py27/bin/nosetests
-   py34 inst: /../sprockets.mixins.media_type/.build/tox/dist/sprockets.mixins.media_type-0.0.0.zip
-   py34 runtests: PYTHONHASHSEED='2156646470'
-   py34 runtests: commands[0] | /.../sprockets.mixins.media_type/build/tox/py34/bin/nosetests
-   _________________________________ summary _________________________________
-     py27: commands succeeded
-     py34: commands succeeded
+   $ tox -p auto
+   ✔ OK py37 in 2.636 seconds
+   ✔ OK py38 in 2.661 seconds
+   ✔ OK py39 in 2.705 seconds
+   __________________________________________________________________________
+     py37: commands succeeded
+     py38: commands succeeded
+     py39: commands succeeded
      congratulations :)
 
 This is what you want to see.  Now you can make your modifications and keep
@@ -104,9 +87,6 @@ to github and issue a pull request.  Describe your changes in the request,
 if Travis isn't too annoyed someone will review it, and eventually merge
 it back.
 
-.. _flake8: http://flake8.readthedocs.org/
-.. _nose: http://nose.readthedocs.org/
-.. _sphinx: http://sphinx-doc.org/
-.. _detox: http://testrun.org/tox/
-.. _tox: http://testrun.org/tox/
-.. _virtualenv: http://virtualenv.pypa.io/
+.. _flake8: https://flake8.pycqa.org/
+.. _sphinx: https://sphinx-doc.org/
+.. _tox: https://tox.readthedocs.io/
