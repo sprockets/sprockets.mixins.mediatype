@@ -1,6 +1,10 @@
 Version History
 ===============
 
+`3.0.3`_ (14 Sep 2020)
+----------------------
+- Import from collections.abc instead of collections (thanks @nullsvm)
+
 `3.0.2`_ (4 May 2020)
 ---------------------
 - Do not log tracebacks when decoding the request body fails
@@ -75,7 +79,8 @@ Version History
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.2...HEAD
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.3...HEAD
+.. _3.0.3: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.2...3.0.3
 .. _3.0.2: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.1...3.0.2
 .. _3.0.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.0...3.0.1
 .. _3.0.0: https://github.com/sprockets/sprockets.mixins.mediatype/compare/2.2.2...3.0.0
