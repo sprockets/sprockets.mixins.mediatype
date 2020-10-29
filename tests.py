@@ -114,9 +114,13 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
 
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
+    def setUp(self):
+        self.app = None
+        super().setUp()
 
     def get_app(self):
-        return examples.make_application(debug=True)
+        self.app = examples.make_application(debug=True)
+        return self.app
 
     def test_that_request_with_unhandled_type_results_in_415(self):
         response = self.fetch(
@@ -156,6 +160,13 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
             headers={'Content-Type': 'application/vendor+json'})
         self.assertEqual(response.code, 200)
         self.assertEqual(json.loads(response.body.decode()), body)
+
+    def test_that_invalid_content_types_result_in_bad_request(self):
+        content.set_default_content_type(self.app, None, None)
+        response = self.fetch(
+            '/', method='POST', body='{"hi":"there"}',
+            headers={'Content-Type': 'application-json'})
+        self.assertEqual(response.code, 400)
 
 
 class JSONTranscoderTests(unittest.TestCase):

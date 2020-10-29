@@ -1,6 +1,11 @@
 Version History
 ===============
 
+Next Release
+------------
+- Return a "400 Bad Request" when an invalid Content-Type header is received
+  instead of failing with an internal server error
+
 `3.0.3`_ (14 Sep 2020)
 ----------------------
 - Import from collections.abc instead of collections (thanks @nullsvm)
