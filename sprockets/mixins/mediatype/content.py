@@ -319,9 +319,14 @@ class ContentMixin:
         """
         if self._request_body is None:
             settings = get_settings(self.application, force_instance=True)
-            content_type_header = headers.parse_content_type(
-                self.request.headers.get('Content-Type',
-                                         settings.default_content_type))
+            content_type = self.request.headers.get(
+                'Content-Type', settings.default_content_type)
+
+            try:
+                content_type_header = headers.parse_content_type(content_type)
+            except ValueError:
+                raise web.HTTPError(400, 'failed to parse content type %s',
+                                    content_type)
             content_type = '/'.join([content_type_header.content_type,
                                      content_type_header.content_subtype])
             if content_type_header.content_suffix is not None:
