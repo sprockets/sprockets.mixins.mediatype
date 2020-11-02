@@ -21,7 +21,7 @@ except ImportError as error:  # noqa: F841  # pragma no cover
     set_default_content_type = _error_closure
 
 
-version_info = (3, 0, 3)
+version_info = (3, 0, 4)
 __version__ = '.'.join(str(x) for x in version_info)
 
 __all__ = ['ContentMixin', 'ContentSettings', 'add_binary_content_type',

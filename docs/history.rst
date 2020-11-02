@@ -1,8 +1,8 @@
 Version History
 ===============
 
-Next Release
-------------
+`3.0.4`_ (2 Nov 2020)
+---------------------
 - Return a "400 Bad Request" when an invalid Content-Type header is received
   instead of failing with an internal server error
 
@@ -84,7 +84,8 @@ Next Release
 ---------------------
 - Initial Release
 
-.. _Next Release: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.3...HEAD
+.. _Next Release: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.4...HEAD
+.. _3.0.4: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.3...3.0.4
 .. _3.0.3: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.2...3.0.3
 .. _3.0.2: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.1...3.0.2
 .. _3.0.1: https://github.com/sprockets/sprockets.mixins.mediatype/compare/3.0.0...3.0.1
