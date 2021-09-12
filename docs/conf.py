@@ -4,6 +4,7 @@ needs_sphinx = '1.0'
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
+              'sphinx.ext.extlinks',
               'sphinxcontrib.autohttp.tornado']
 master_doc = 'index'
 project = 'sprockets.mixins.mediatype'
@@ -31,4 +32,10 @@ intersphinx_mapping = {
     'requests': ('https://requests.readthedocs.org/en/latest/', None),
     'sprockets': ('https://sprockets.readthedocs.org/en/latest/', None),
     'tornado': ('http://tornadoweb.org/en/latest/', None),
+}
+
+# https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html
+extlinks = {
+    'compare': ('https://github.com/sprockets/sprockets.mixins.mediatype'
+                '/compare/%s', '%s')
 }
