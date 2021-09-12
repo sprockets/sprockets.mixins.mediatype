@@ -1,3 +1,4 @@
 -e .[msgpack]
 -r docs.txt
+-r lint.txt
 -r testing.txt
