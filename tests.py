@@ -63,7 +63,7 @@ def pack_bytes(payload):
 class SendResponseTests(testing.AsyncHTTPTestCase):
 
     def get_app(self):
-        return examples.make_application(debug=True)
+        return examples.make_application()
 
     def test_that_content_type_default_works(self):
         response = self.fetch('/', method='POST', body='{}',
@@ -119,7 +119,7 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
         super().setUp()
 
     def get_app(self):
-        self.app = examples.make_application(debug=True)
+        self.app = examples.make_application()
         return self.app
 
     def test_that_request_with_unhandled_type_results_in_415(self):
