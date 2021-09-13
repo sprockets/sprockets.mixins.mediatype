@@ -38,7 +38,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools
           python -m pip install -r requires/testing.txt
-          python -m pip install -e .
+          python -m pip install -e '.[msgpack]'
       - name: Dump packages
         run: python -m pip freeze
       - name: Run tests
