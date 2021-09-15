@@ -8,7 +8,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinxcontrib.autohttp.tornado']
 master_doc = 'index'
 project = 'sprockets.mixins.mediatype'
-copyright = '2015-2018, AWeber Communications'
+copyright = '2015-2021, AWeber Communications'
 release = pkg_resources.get_distribution('sprockets.mixins.mediatype').version
 version = '.'.join(release.split('.')[0:1])
 
