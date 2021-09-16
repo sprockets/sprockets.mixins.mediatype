@@ -1,9 +1,9 @@
 """sprockets.mixins.mediatype"""
 try:
-    from .content import (ContentMixin, ContentSettings,
+    from .content import (ContentMixin, ContentSettings,  # noqa: F401
                           add_binary_content_type, add_text_content_type,
                           set_default_content_type)
-except ImportError as error:  # noqa: F841  # pragma no cover
+except ImportError:  # pragma: no cover
     import warnings
     warnings.warn(
         'Missing runtime requirements for sprockets.mixins.mediatype',
