@@ -26,6 +26,9 @@ jobs:
       - name: Formatting
         run: |
           yapf -pqr docs setup.py sprockets tests.py
+      - name: Typing
+        run: |
+          mypy sprockets/mixins/mediatype/ examples.py
 
   test:
     runs-on: ubuntu-latest
@@ -43,8 +46,6 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install '.[ci]'
           python -m pip install -e '.[msgpack]'
-      - name: Dump packages
-        run: python -m pip freeze
       - name: Run tests
         run: |
           coverage run -m unittest tests.py
