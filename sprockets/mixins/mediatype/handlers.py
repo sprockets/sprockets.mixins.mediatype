@@ -20,7 +20,7 @@ class BinaryContentHandler:
     """
     Pack and unpack binary types.
 
-    :param str content_type: registered content type
+    :param content_type: registered content type
     :param pack: function that transforms an object instance
         into :class:`bytes`
     :param unpack: function that transforms :class:`bytes`
@@ -43,8 +43,8 @@ class BinaryContentHandler:
         """
         Transform an object into :class:`bytes`.
 
-        :param object inst_data: object to encode
-        :param str encoding: ignored
+        :param inst_data: object to encode
+        :param encoding: ignored
         :returns: :class:`tuple` of the selected content
             type and the :class:`bytes` representation of
             `inst_data`
@@ -59,11 +59,8 @@ class BinaryContentHandler:
         """
         Get an object from :class:`bytes`
 
-        :param bytes data_bytes: stream of bytes to decode
-        :param str encoding: ignored
-        :param dict content_parameters: optional :class:`dict` of
-            content type parameters from the :mailheader:`Content-Type`
-            header
+        :param data_bytes: stream of bytes to decode
+        :param encoding: ignored
         :returns: decoded :class:`object` instance
 
         """
@@ -74,12 +71,12 @@ class TextContentHandler:
     """
     Transcodes between textual and object representations.
 
-    :param str content_type: registered content type
+    :param content_type: registered content type
     :param dumps: function that transforms an object instance
         into a :class:`str`
     :param loads: function that transforms a :class:`str`
         into an object instance
-    :param str default_encoding: encoding to apply when
+    :param default_encoding: encoding to apply when
         transcoding from the underlying body :class:`byte`
         instance
 
@@ -104,8 +101,8 @@ class TextContentHandler:
         """
         Transform an object into :class:`bytes`.
 
-        :param object inst_data: object to encode
-        :param str encoding: character set used to encode the bytes
+        :param inst_data: object to encode
+        :param encoding: character set used to encode the bytes
             returned from the ``dumps`` function.  This defaults to
             :attr:`default_encoding`
         :returns: :class:`tuple` of the selected content
@@ -125,13 +122,10 @@ class TextContentHandler:
         """
         Get an object from :class:`bytes`
 
-        :param bytes data: stream of bytes to decode
-        :param str encoding: character set used to decode the incoming
+        :param data: stream of bytes to decode
+        :param encoding: character set used to decode the incoming
             bytes before calling the ``loads`` function.  This defaults
             to :attr:`default_encoding`
-        :param dict content_parameters: optional :class:`dict` of
-            content type parameters from the :mailheader:`Content-Type`
-            header
         :returns: decoded :class:`object` instance
 
         """

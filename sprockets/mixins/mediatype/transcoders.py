@@ -26,10 +26,10 @@ class JSONTranscoder(handlers.TextContentHandler):
     """
     JSON transcoder instance.
 
-    :param str content_type: the content type that this encoder instance
+    :param content_type: the content type that this encoder instance
         implements. If omitted, ``application/json`` is used. This is
         passed directly to the ``TextContentHandler`` initializer.
-    :param str default_encoding: the encoding to use if none is specified.
+    :param default_encoding: the encoding to use if none is specified.
         If omitted, this defaults to ``utf-8``. This is passed directly to
         the ``TextContentHandler`` initializer.
 
@@ -77,7 +77,7 @@ class JSONTranscoder(handlers.TextContentHandler):
         """
         Called to encode unrecognized object.
 
-        :param object obj: the object to encode
+        :param obj: the object to encode
         :return: the encoded object
         :raises TypeError: when `obj` cannot be encoded
 
@@ -114,7 +114,7 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
     """
     Msgpack Transcoder instance.
 
-    :param str content_type: the content type that this encoder instance
+    :param content_type: the content type that this encoder instance
         implements. If omitted, ``application/msgpack`` is used. This
         is passed directly to the ``BinaryContentHandler`` initializer.
 

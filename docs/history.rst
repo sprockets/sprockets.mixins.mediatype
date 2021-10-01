@@ -1,6 +1,10 @@
 Version History
 ===============
 
+:compare:`Next <3.0.4...master>`
+--------------------------------
+- Add type annotations (see :ref:`type-info`)
+
 :compare:`3.0.4 <3.0.3...3.0.4>` (2 Nov 2020)
 ---------------------------------------------
 - Return a "400 Bad Request" when an invalid Content-Type header is received
