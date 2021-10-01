@@ -81,10 +81,8 @@ class ContentSettings:
 
        def make_application():
           app = web.Application([('/', SomeHandler)])
-          add_binary_content_type(app, 'application/msgpack',
-                                  msgpack.packb, msgpack.unpackb)
-          add_text_content_type(app, 'application/json', 'utf-8',
-                                json.dumps, json.loads)
+          add_transcoder(app, transcoders.JSONTranscoder())
+          add_transcoder(app, transcoders.MsgPackTranscoder())
           return app
 
     Of course, that is quite tedious, so use the :class:`.ContentMixin`
