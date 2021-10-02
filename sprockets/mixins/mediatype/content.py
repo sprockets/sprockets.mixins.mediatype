@@ -391,8 +391,14 @@ class ContentMixin(web.RequestHandler):
 
         """
         settings = get_settings(self.application, force_instance=True)
-        # TODO -- account for get_response_type returning None
-        handler = settings[self.get_response_content_type()]  # type: ignore
+        response_type = self.get_response_content_type()
+        if response_type is None:
+            self._logger.error('failed to find a suitable response '
+                               'content type for request')
+            self._logger.error('please set a default content type')
+            raise web.HTTPError(406)
+
+        handler = settings[response_type]
         content_type, data_bytes = handler.to_bytes(body)
         if set_content_type:
             self.set_header('Content-Type', content_type)

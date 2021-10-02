@@ -61,8 +61,13 @@ def pack_bytes(payload):
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
+    def setUp(self):
+        self.application = None
+        super().setUp()
+
     def get_app(self):
-        return examples.make_application()
+        self.application = examples.make_application()
+        return self.application
 
     def test_that_content_type_default_works(self):
         response = self.fetch('/',
@@ -128,6 +133,22 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
                               })
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], 'expected/content')
+
+    def test_that_no_default_content_type_will_406(self):
+        # NB if the Accept header is omitted, then a default of `*/*` will
+        # be used which results in a match against any registered handler.
+        # Using an accept header forces the "no match" case.
+        settings = content.get_settings(self.application, force_instance=True)
+        settings.default_content_type = None
+        settings.default_encoding = None
+        response = self.fetch('/',
+                              method='POST',
+                              body='{}',
+                              headers={
+                                  'Accept': 'application/xml',
+                                  'Content-Type': 'application/json',
+                              })
+        self.assertEqual(response.code, 406)
 
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
