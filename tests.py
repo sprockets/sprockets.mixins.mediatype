@@ -285,6 +285,11 @@ class ContentSettingsTests(unittest.TestCase):
                          'json')
         self.assertEqual(settings['application/json; charset=utf-8'], handler)
 
+    def test_that_setting_no_default_content_type_warns(self):
+        settings = content.ContentSettings()
+        with self.assertWarns(DeprecationWarning):
+            settings.default_content_type = None
+
 
 class ContentFunctionTests(unittest.TestCase):
     def setUp(self):

@@ -31,6 +31,8 @@ from __future__ import annotations
 
 import logging
 import typing
+import warnings
+
 try:
     from typing import Literal
 except ImportError:  # pragma: no cover
@@ -90,15 +92,15 @@ class ContentSettings:
 
     """
 
-    default_content_type: typing.Union[str, None]
     default_encoding: typing.Union[str, None]
-    _handlers: typing.Dict[str, type_info.Transcoder]
     _available_types: typing.List[datastructures.ContentType]
+    _default_content_type: typing.Union[str, None]
+    _handlers: typing.Dict[str, type_info.Transcoder]
 
     def __init__(self) -> None:
         self._handlers = {}
         self._available_types = []
-        self.default_content_type = None
+        self._default_content_type = None
         self.default_encoding = None
 
     def __getitem__(self, content_type: str) -> type_info.Transcoder:
@@ -136,6 +138,20 @@ class ContentSettings:
 
         """
         return self._available_types
+
+    @property
+    def default_content_type(self) -> typing.Union[str, None]:
+        return self._default_content_type
+
+    @default_content_type.setter
+    def default_content_type(self, new_value: typing.Union[str, None]) -> None:
+        if new_value is None:
+            warnings.warn(
+                DeprecationWarning(
+                    'Using sprockets.mixins.mediatype without a default'
+                    ' content type is deprecated and will become an error'
+                    ' in a future version'))
+        self._default_content_type = new_value
 
 
 def install(application: type_info.HasSettings,
