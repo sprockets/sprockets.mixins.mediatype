@@ -414,9 +414,17 @@ class ContentMixin(web.RequestHandler):
             self._logger.error('please set a default content type')
             raise web.HTTPError(406)
 
-        handler = settings[response_type]
-        content_type, data_bytes = handler.to_bytes(body)
-        if set_content_type:
-            self.set_header('Content-Type', content_type)
-            self.add_header('Vary', 'Accept')
-        self.write(data_bytes)
+        try:
+            handler = settings[response_type]
+        except KeyError:
+            self._logger.error(
+                'no transcoder for the selected response content type %s, '
+                'is the default content type %r correct?', response_type,
+                settings.default_content_type)
+            raise web.HTTPError(500)
+        else:
+            content_type, data_bytes = handler.to_bytes(body)
+            if set_content_type:
+                self.set_header('Content-Type', content_type)
+                self.add_header('Vary', 'Accept')
+            self.write(data_bytes)

@@ -150,6 +150,15 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
                               })
         self.assertEqual(response.code, 406)
 
+    def test_misconfigured_default_content_type(self):
+        settings = content.get_settings(self.application, force_instance=True)
+        settings.default_content_type = 'application/xml'
+        response = self.fetch('/',
+                              method='POST',
+                              body='{}',
+                              headers={'Content-Type': 'application/json'})
+        self.assertEqual(response.code, 500)
+
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
     def setUp(self):
