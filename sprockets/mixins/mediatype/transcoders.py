@@ -16,7 +16,7 @@ import collections.abc
 
 try:
     import umsgpack
-except ImportError:
+except ImportError:  # pragma: no cover
     umsgpack = None  # type: ignore
 
 from sprockets.mixins.mediatype import handlers, type_info
