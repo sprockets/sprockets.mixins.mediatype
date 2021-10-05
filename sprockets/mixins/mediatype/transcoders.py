@@ -116,7 +116,7 @@ class JSONTranscoder(handlers.TextContentHandler):
         if isinstance(obj, uuid.UUID):
             return str(obj)
         if hasattr(obj, 'isoformat'):
-            return typing.cast(type_info.DefinesIsoFormat, obj).isoformat()
+            return typing.cast(type_info.SupportsIsoFormat, obj).isoformat()
         if isinstance(obj, (bytes, bytearray, memoryview)):
             return base64.b64encode(obj).decode('ASCII')
         raise TypeError('{!r} is not JSON serializable'.format(obj))
@@ -234,7 +234,7 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
             datum = datum.tobytes()
 
         if hasattr(datum, 'isoformat'):
-            datum = typing.cast(type_info.DefinesIsoFormat, datum).isoformat()
+            datum = typing.cast(type_info.SupportsIsoFormat, datum).isoformat()
 
         if isinstance(datum, (bytes, str)):
             return datum
@@ -429,7 +429,7 @@ class FormUrlEncodedTranscoder:
         return dict(output)
 
     def _encode(self, datum: typing.Union[bool, None, float, int, str,
-                                          type_info.DefinesIsoFormat],
+                                          type_info.SupportsIsoFormat],
                 char_map: typing.Mapping[int, str], encoding: str) -> str:
         if isinstance(datum, str):
             pass  # optimization: skip additional checks for strings
@@ -442,7 +442,7 @@ class FormUrlEncodedTranscoder:
             datum = self.options.literal_mapping[datum]  # type: ignore
         elif isinstance(datum, (bytearray, bytes, memoryview)):
             return ''.join(char_map[c] for c in datum)
-        elif isinstance(datum, type_info.DefinesIsoFormat):
+        elif isinstance(datum, type_info.SupportsIsoFormat):
             datum = datum.isoformat()
         else:
             datum = str(datum)

@@ -12,24 +12,20 @@ except ImportError:
 
 
 @runtime_checkable
-class DefinesIsoFormat(Protocol):
+class SupportsIsoFormat(Protocol):
     """An object that has an isoformat method."""
     def isoformat(self) -> str:
         """Return the date/time in ISO-8601 format."""
         ...
 
 
-class HasSettings(Protocol):
+class SupportsSettings(Protocol):
     """Something that quacks like a tornado.web.Application."""
     settings: typing.Dict[str, typing.Any]
     """Application settings."""
 
 
-SerializablePrimitives = (type(None), bool, bytearray, bytes, float, int,
-                          memoryview, str, uuid.UUID)
-"""Use this with isinstance to identify simple values."""
-
-Serializable = typing.Union[DefinesIsoFormat, None, bool, bytearray, bytes,
+Serializable = typing.Union[SupportsIsoFormat, None, bool, bytearray, bytes,
                             float, int, memoryview, str, typing.Mapping,
                             typing.Sequence, typing.Set, uuid.UUID]
 """Types that can be serialized by this library.

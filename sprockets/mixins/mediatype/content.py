@@ -154,7 +154,7 @@ class ContentSettings:
         self._default_content_type = new_value
 
 
-def install(application: type_info.HasSettings,
+def install(application: type_info.SupportsSettings,
             default_content_type: typing.Optional[str],
             encoding: typing.Optional[str] = None) -> ContentSettings:
     """Install the media type management settings and return it"""
@@ -170,20 +170,20 @@ def install(application: type_info.HasSettings,
 
 @typing.overload
 def get_settings(
-    application: type_info.HasSettings,
+    application: type_info.SupportsSettings,
     force_instance: Literal[False] = False
 ) -> typing.Union[ContentSettings, None]:
     ...  # pragma: no cover
 
 
 @typing.overload
-def get_settings(application: type_info.HasSettings,
+def get_settings(application: type_info.SupportsSettings,
                  force_instance: Literal[True]) -> ContentSettings:
     ...  # pragma: no cover
 
 
 def get_settings(
-        application: type_info.HasSettings,
+        application: type_info.SupportsSettings,
         force_instance: bool = False) -> typing.Union[ContentSettings, None]:
     """
     Retrieve the media type settings for a application.
@@ -205,7 +205,7 @@ def get_settings(
     return install(application, None)
 
 
-def add_binary_content_type(application: type_info.HasSettings,
+def add_binary_content_type(application: type_info.SupportsSettings,
                             content_type: str, pack: type_info.PackBFunction,
                             unpack: type_info.UnpackBFunction) -> None:
     """
@@ -223,7 +223,7 @@ def add_binary_content_type(application: type_info.HasSettings,
                    handlers.BinaryContentHandler(content_type, pack, unpack))
 
 
-def add_text_content_type(application: type_info.HasSettings,
+def add_text_content_type(application: type_info.SupportsSettings,
                           content_type: str, default_encoding: str,
                           dumps: type_info.DumpSFunction,
                           loads: type_info.LoadSFunction) -> None:
@@ -251,7 +251,7 @@ def add_text_content_type(application: type_info.HasSettings,
                                     default_encoding))
 
 
-def add_transcoder(application: type_info.HasSettings,
+def add_transcoder(application: type_info.SupportsSettings,
                    transcoder: type_info.Transcoder,
                    content_type: typing.Optional[str] = None) -> None:
     """
@@ -273,7 +273,7 @@ def add_transcoder(application: type_info.HasSettings,
     settings[content_type or transcoder.content_type] = transcoder
 
 
-def set_default_content_type(application: type_info.HasSettings,
+def set_default_content_type(application: type_info.SupportsSettings,
                              content_type: str,
                              encoding: typing.Optional[str] = None) -> None:
     """

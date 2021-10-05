@@ -36,21 +36,18 @@ intersphinx_mapping = {
 # and the prefixed name (e.g., type_info.Deserialized) since both forms
 # appear in the typing annotations.
 extensions.append('sphinx.ext.autodoc')
+_names = {
+    'Deserialized', 'DumpSFunction', 'LoadSFunction', 'MsgPackable',
+    'PackBFunction', 'Serializable', 'SupportsIsoFormat', 'SupportsSettings',
+    'Transcoder', 'UnpackBFunction'
+}
 autodoc_type_aliases = {
     alias: f'sprockets.mixins.mediatype.type_info.{alias}'
-    for alias in {
-        'DefinesIsoFormat', 'Deserialized', 'DumpSFunction', 'HasSettings',
-        'LoadSFunction', 'MsgPackable', 'PackBFunction', 'Serializable',
-        'Transcoder', 'UnpackBFunction'
-    }
+    for alias in _names
 }
 autodoc_type_aliases.update({
     f'type_info.{alias}': f'sprockets.mixins.mediatype.type_info.{alias}'
-    for alias in {
-        'DefinesIsoFormat', 'Deserialized', 'DumpSFunction', 'HasSettings',
-        'LoadSFunction', 'MsgPackable', 'PackBFunction', 'Serializable',
-        'Transcoder', 'UnpackBFunction'
-    }
+    for alias in _names
 })
 
 # https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html
