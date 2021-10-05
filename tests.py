@@ -4,10 +4,12 @@ import json
 import os
 import pickle
 import struct
-import unittest
+import typing
+import unittest.mock
 import uuid
 
-from tornado import testing
+from ietfparse import algorithms
+from tornado import httputil, testing, web
 import umsgpack
 
 from sprockets.mixins.mediatype import content, handlers, transcoders
@@ -61,8 +63,15 @@ def pack_bytes(payload):
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
+    application: typing.Union[None, web.Application]
+
+    def setUp(self):
+        self.application = None
+        super().setUp()
+
     def get_app(self):
-        return examples.make_application()
+        self.application = examples.make_application()
+        return self.application
 
     def test_that_content_type_default_works(self):
         response = self.fetch('/',
@@ -129,6 +138,43 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(response.headers['Content-Type'], 'expected/content')
 
+    def test_that_no_default_content_type_will_406(self):
+        # NB if the Accept header is omitted, then a default of `*/*` will
+        # be used which results in a match against any registered handler.
+        # Using an accept header forces the "no match" case.
+        settings = content.get_settings(self.application, force_instance=True)
+        settings.default_content_type = None
+        settings.default_encoding = None
+        response = self.fetch('/',
+                              method='POST',
+                              body='{}',
+                              headers={
+                                  'Accept': 'application/xml',
+                                  'Content-Type': 'application/json',
+                              })
+        self.assertEqual(response.code, 406)
+
+    def test_misconfigured_default_content_type(self):
+        settings = content.get_settings(self.application, force_instance=True)
+        settings.default_content_type = 'application/xml'
+        response = self.fetch('/',
+                              method='POST',
+                              body='{}',
+                              headers={'Content-Type': 'application/json'})
+        self.assertEqual(response.code, 500)
+
+    def test_that_response_content_type_can_be_set(self):
+        class FooGenerator(content.ContentMixin, web.RequestHandler):
+            def get(self):
+                self.set_header('Content-Type', 'application/foo+json')
+                self.send_response({'foo': 'bar'}, set_content_type=False)
+
+        self.application.add_handlers(r'.*', [web.url(r'/foo', FooGenerator)])
+        response = self.fetch('/foo')
+        self.assertEqual(200, response.code)
+        self.assertEqual('application/foo+json',
+                         response.headers.get('Content-Type'))
+
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
     def setUp(self):
@@ -186,6 +232,49 @@ class GetRequestBodyTests(testing.AsyncHTTPTestCase):
                               body='{"hi":"there"}',
                               headers={'Content-Type': 'application-json'})
         self.assertEqual(response.code, 400)
+
+
+class MixinCacheTests(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.transcoder = transcoders.JSONTranscoder()
+
+        application = unittest.mock.Mock()
+        application.settings = {}
+        application.ui_methods = {}
+        content.install(application, 'application/json', 'utf-8')
+        content.add_transcoder(application, self.transcoder)
+
+        request = httputil.HTTPServerRequest(
+            'POST',
+            '/',
+            body=b'{}',
+            connection=unittest.mock.Mock(),
+            headers=httputil.HTTPHeaders({'Content-Type': 'application/json'}),
+        )
+
+        self.handler = content.ContentMixin(application, request)
+
+    def test_that_best_response_type_is_cached(self):
+        with unittest.mock.patch(
+                'sprockets.mixins.mediatype.content.algorithms.'
+                'select_content_type',
+                side_effect=algorithms.select_content_type
+        ) as select_content_type:
+            first = self.handler.get_response_content_type()
+            second = self.handler.get_response_content_type()
+
+            self.assertIs(first, second)
+            self.assertEqual(1, select_content_type.call_count)
+
+    def test_that_request_body_is_cached(self):
+        self.transcoder.from_bytes = unittest.mock.Mock(
+            wraps=self.transcoder.from_bytes)
+        first = self.handler.get_request_body()
+        second = self.handler.get_request_body()
+        self.assertIs(first, second)
+        self.assertEqual(1, self.transcoder.from_bytes.call_count)
 
 
 class JSONTranscoderTests(unittest.TestCase):
@@ -263,6 +352,11 @@ class ContentSettingsTests(unittest.TestCase):
         self.assertEqual(settings.available_content_types[0].content_subtype,
                          'json')
         self.assertEqual(settings['application/json; charset=utf-8'], handler)
+
+    def test_that_setting_no_default_content_type_warns(self):
+        settings = content.ContentSettings()
+        with self.assertWarns(DeprecationWarning):
+            settings.default_content_type = None
 
 
 class ContentFunctionTests(unittest.TestCase):
@@ -414,3 +508,15 @@ class MsgPackTranscoderTests(unittest.TestCase):
         dumped = self.transcoder.packb(data)
         self.assertEqual(self.transcoder.unpackb(dumped), data)
         self.assertEqual(dumped, pack_bytes(data))
+
+    def test_that_dicts_are_sent_as_maps(self):
+        data = {'compact': True, 'schema': 0}
+        dumped = self.transcoder.packb(data)
+        self.assertEqual(b'\x82\xA7compact\xC3\xA6schema\x00', dumped)
+
+    def test_that_transcoder_creation_fails_if_umsgpack_is_missing(self):
+        with unittest.mock.patch(
+                'sprockets.mixins.mediatype.transcoders.umsgpack',
+                new_callable=lambda: None):
+            with self.assertRaises(RuntimeError):
+                transcoders.MsgPackTranscoder()

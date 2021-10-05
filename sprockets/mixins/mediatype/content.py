@@ -27,12 +27,23 @@ adds content handling methods to :class:`~tornado.web.RequestHandler`
 instances.
 
 """
-import logging
+from __future__ import annotations
 
-from ietfparse import algorithms, errors, headers
+import logging
+import typing
+import warnings
+
+try:
+    from typing import Literal
+except ImportError:  # pragma: no cover
+    # "ignore" is required to avoid an incompatible import
+    # error due to different bindings of _SpecialForm
+    from typing_extensions import Literal  # type: ignore
+
+from ietfparse import algorithms, datastructures, errors, headers
 from tornado import web
 
-from . import handlers
+from sprockets.mixins.mediatype import handlers, type_info
 
 logger = logging.getLogger(__name__)
 SETTINGS_KEY = 'sprockets.mixins.mediatype.ContentSettings'
@@ -52,13 +63,9 @@ class ContentSettings:
 
     The settings instance contains the list of available content
     types and handlers associated with them.  Each handler implements
-    a simple interface:
-
-    - ``to_bytes(dict, encoding:str) -> bytes``
-    - ``from_bytes(bytes, encoding:str) -> dict``
-
-    Use the :func:`add_binary_content_type` and :func:`add_text_content_type`
-    helper functions to modify the settings for the application.
+    the :class:`~sprockets.mixins.mediatype.type_info.Transcoder`
+    interface.  Use :func:`add_transcoder` to add support for a
+    specific content type to the application.
 
     This class acts as a mapping from content-type string to the
     appropriate handler instance.  Add new content types and find
@@ -76,27 +83,32 @@ class ContentSettings:
 
        def make_application():
           app = web.Application([('/', SomeHandler)])
-          add_binary_content_type(app, 'application/msgpack',
-                                  msgpack.packb, msgpack.unpackb)
-          add_text_content_type(app, 'application/json', 'utf-8',
-                                json.dumps, json.loads)
+          add_transcoder(app, transcoders.JSONTranscoder())
+          add_transcoder(app, transcoders.MsgPackTranscoder())
           return app
 
     Of course, that is quite tedious, so use the :class:`.ContentMixin`
-    instead.
+    instead of using the settings directly.
 
     """
-    def __init__(self):
+
+    default_encoding: typing.Union[str, None]
+    _available_types: typing.List[datastructures.ContentType]
+    _default_content_type: typing.Union[str, None]
+    _handlers: typing.Dict[str, type_info.Transcoder]
+
+    def __init__(self) -> None:
         self._handlers = {}
         self._available_types = []
-        self.default_content_type = None
+        self._default_content_type = None
         self.default_encoding = None
 
-    def __getitem__(self, content_type):
+    def __getitem__(self, content_type: str) -> type_info.Transcoder:
         parsed = headers.parse_content_type(content_type)
         return self._handlers[str(parsed)]
 
-    def __setitem__(self, content_type, handler):
+    def __setitem__(self, content_type: str,
+                    handler: type_info.Transcoder) -> None:
         parsed = headers.parse_content_type(content_type)
         content_type = str(parsed)
         if content_type in self._handlers:
@@ -107,11 +119,17 @@ class ContentSettings:
         self._available_types.append(parsed)
         self._handlers[content_type] = handler
 
-    def get(self, content_type, default=None):
+    def get(
+        self,
+        content_type: str,
+        default: typing.Union[type_info.Transcoder, None] = None
+    ) -> typing.Union[type_info.Transcoder, None]:
+        """Retrieve the handler for a specific content type."""
         return self._handlers.get(content_type, default)
 
     @property
-    def available_content_types(self):
+    def available_content_types(
+            self) -> typing.Sequence[datastructures.ContentType]:
         """
         List of the content types that are registered.
 
@@ -121,22 +139,28 @@ class ContentSettings:
         """
         return self._available_types
 
+    @property
+    def default_content_type(self) -> typing.Union[str, None]:
+        return self._default_content_type
 
-def install(application, default_content_type, encoding=None):
-    """
-    Install the media type management settings.
+    @default_content_type.setter
+    def default_content_type(self, new_value: typing.Union[str, None]) -> None:
+        if new_value is None:
+            warnings.warn(
+                DeprecationWarning(
+                    'Using sprockets.mixins.mediatype without a default'
+                    ' content type is deprecated and will become an error'
+                    ' in a future version'))
+        self._default_content_type = new_value
 
-    :param tornado.web.Application application: the application to
-        install a :class:`.ContentSettings` object into.
-    :param str|NoneType default_content_type:
-    :param str|NoneType encoding:
 
-    :returns: the content settings instance
-    :rtype: sprockets.mixins.mediatype.content.ContentSettings
-
-    """
+def install(application: type_info.HasSettings,
+            default_content_type: typing.Optional[str],
+            encoding: typing.Optional[str] = None) -> ContentSettings:
+    """Install the media type management settings and return it"""
     try:
-        settings = application.settings[SETTINGS_KEY]
+        settings = typing.cast(ContentSettings,
+                               application.settings[SETTINGS_KEY])
     except KeyError:
         settings = application.settings[SETTINGS_KEY] = ContentSettings()
         settings.default_content_type = default_content_type
@@ -144,54 +168,75 @@ def install(application, default_content_type, encoding=None):
     return settings
 
 
-def get_settings(application, force_instance=False):
+@typing.overload
+def get_settings(
+    application: type_info.HasSettings,
+    force_instance: Literal[False] = False
+) -> typing.Union[ContentSettings, None]:
+    ...  # pragma: no cover
+
+
+@typing.overload
+def get_settings(application: type_info.HasSettings,
+                 force_instance: Literal[True]) -> ContentSettings:
+    ...  # pragma: no cover
+
+
+def get_settings(
+        application: type_info.HasSettings,
+        force_instance: bool = False) -> typing.Union[ContentSettings, None]:
     """
     Retrieve the media type settings for a application.
 
-    :param tornado.web.Application application:
-    :keyword bool force_instance: if :data:`True` then create the
+    :param application:
+    :param force_instance: if :data:`True` then create the
         instance if it does not exist
 
-    :return: the content settings instance
-    :rtype: sprockets.mixins.mediatype.content.ContentSettings
+    :return: the content settings instance or :data:`None` if
+        `force_instance` is not :data:`True` and :func:`.install`
+        has not been called
 
     """
     try:
-        return application.settings[SETTINGS_KEY]
+        return typing.cast(ContentSettings, application.settings[SETTINGS_KEY])
     except KeyError:
         if not force_instance:
             return None
     return install(application, None)
 
 
-def add_binary_content_type(application, content_type, pack, unpack):
+def add_binary_content_type(application: type_info.HasSettings,
+                            content_type: str, pack: type_info.PackBFunction,
+                            unpack: type_info.UnpackBFunction) -> None:
     """
     Add handler for a binary content type.
 
-    :param tornado.web.Application application: the application to modify
-    :param str content_type: the content type to add
+    :param application: the application to modify
+    :param content_type: the content type to add
     :param pack: function that packs a dictionary to a byte string.
-        ``pack(dict) -> bytes``
+        See :any:`type_info.PackBFunction`
     :param unpack: function that takes a byte string and returns a
-        dictionary.  ``unpack(bytes) -> dict``
+        dictionary.  See :any:`type_info.UnpackBFunction`
 
     """
     add_transcoder(application,
                    handlers.BinaryContentHandler(content_type, pack, unpack))
 
 
-def add_text_content_type(application, content_type, default_encoding, dumps,
-                          loads):
+def add_text_content_type(application: type_info.HasSettings,
+                          content_type: str, default_encoding: str,
+                          dumps: type_info.DumpSFunction,
+                          loads: type_info.LoadSFunction) -> None:
     """
     Add handler for a text content type.
 
-    :param tornado.web.Application application: the application to modify
-    :param str content_type: the content type to add
-    :param str default_encoding: encoding to use when one is unspecified
+    :param application: the application to modify
+    :param content_type: the content type to add
+    :param default_encoding: encoding to use when one is unspecified
     :param dumps: function that dumps a dictionary to a string.
-        ``dumps(dict, encoding:str) -> str``
+        See :any:`type_info.DumpSFunction`
     :param loads: function that loads a dictionary from a string.
-        ``loads(str, encoding:str) -> dict``
+        See :any:`type_info.LoadSFunction`
 
     Note that the ``charset`` parameter is stripped from `content_type`
     if it is present.
@@ -206,49 +251,37 @@ def add_text_content_type(application, content_type, default_encoding, dumps,
                                     default_encoding))
 
 
-def add_transcoder(application, transcoder, content_type=None):
+def add_transcoder(application: type_info.HasSettings,
+                   transcoder: type_info.Transcoder,
+                   content_type: typing.Optional[str] = None) -> None:
     """
     Register a transcoder for a specific content type.
 
-    :param tornado.web.Application application: the application to modify
-    :param transcoder: object that translates between :class:`bytes` and
-        :class:`object` instances
-    :param str content_type: the content type to add.  If this is
-        unspecified or :data:`None`, then the transcoder's ``content_type``
-        attribute is used.
+    :param application: the application to modify
+    :param transcoder: object that translates between :class:`bytes`
+        and object instances
+    :param content_type: the content type to add.  If this is
+        unspecified or :data:`None`, then the transcoder's
+        ``content_type`` attribute is used.
 
-    The `transcoder` instance is required to implement the following
-    simple protocol:
-
-    .. attribute:: transcoder.content_type
-
-       :class:`str` that identifies the MIME type that the transcoder
-       implements.
-
-    .. method:: transcoder.to_bytes(inst_data, encoding=None) -> bytes
-
-       :param object inst_data: the object to encode
-       :param str encoding: character encoding to apply or :data:`None`
-       :returns: the encoded :class:`bytes` instance
-
-    .. method:: transcoder.from_bytes(data_bytes, encoding=None) -> object
-
-       :param bytes data_bytes: the :class:`bytes` instance to decode
-       :param str encoding: character encoding to use or :data:`None`
-       :returns: the decoded :class:`object` instance
+    The `transcoder` instance is required to implement the
+    :class:`~sprockets.mixins.mediatype.type_info.Transcoder`
+    protocol.
 
     """
     settings = get_settings(application, force_instance=True)
     settings[content_type or transcoder.content_type] = transcoder
 
 
-def set_default_content_type(application, content_type, encoding=None):
+def set_default_content_type(application: type_info.HasSettings,
+                             content_type: str,
+                             encoding: typing.Optional[str] = None) -> None:
     """
     Store the default content type for an application.
 
-    :param tornado.web.Application application: the application to modify
-    :param str content_type: the content type to default to
-    :param str|None encoding: encoding to use when one is unspecified
+    :param application: the application to modify
+    :param content_type: the content type to default to
+    :param encoding: encoding to use when one is unspecified
 
     """
     settings = get_settings(application, force_instance=True)
@@ -256,7 +289,7 @@ def set_default_content_type(application, content_type, encoding=None):
     settings.default_encoding = encoding
 
 
-class ContentMixin:
+class ContentMixin(web.RequestHandler):
     """
     Mix this in to add some content handling methods.
 
@@ -276,14 +309,26 @@ class ContentMixin:
     using ``self.write()``.
 
     """
-    def initialize(self):
+    def initialize(self) -> None:
         super().initialize()
-        self._request_body = None
-        self._best_response_match = None
+        self._request_body: typing.Optional[type_info.Deserialized] = None
+        self._best_response_match: typing.Optional[str] = None
         self._logger = getattr(self, 'logger', logger)
 
-    def get_response_content_type(self):
-        """Figure out what content type will be used in the response."""
+    def get_response_content_type(self) -> typing.Union[str, None]:
+        """Select the content type will be used in the response.
+
+        This method implements proactive content negotiation as
+        described in :rfc:`7231#section-3.4.1` using the
+        :http:header:`Accept` request header or the configured
+        default content type if the header is not present.  The
+        selected response type is cached and returned.  It will
+        be used when :meth:`.send_response` is called.
+
+        Note that this method is called by :meth:`.send_response`
+        so you will seldom need to call it directly.
+
+        """
         if self._best_response_match is None:
             settings = get_settings(self.application, force_instance=True)
             acceptable = headers.parse_accept(
@@ -303,11 +348,11 @@ class ContentMixin:
 
         return self._best_response_match
 
-    def get_request_body(self):
+    def get_request_body(self) -> type_info.Deserialized:
         """
         Fetch (and cache) the request body as a dictionary.
 
-        :raise web.HTTPError:
+        :raise tornado.web.HTTPError:
             - if the content type cannot be matched, then the status code
               is set to 415 Unsupported Media Type.
             - if decoding the content body fails, then the status code is
@@ -345,19 +390,41 @@ class ContentMixin:
 
         return self._request_body
 
-    def send_response(self, body, set_content_type=True):
+    def send_response(self,
+                      body: type_info.Serializable,
+                      set_content_type: typing.Optional[bool] = True) -> None:
         """
         Serialize and send ``body`` in the response.
 
-        :param dict body: the body to serialize
-        :param bool set_content_type: should the :http:header:`Content-Type`
+        :param body: the body to serialize
+        :param set_content_type: should the :http:header:`Content-Type`
             header be set?  Defaults to :data:`True`
+
+        The transcoder for the response is selected by calling
+        :meth:`.get_response_content_type` which chooses an
+        appropriate transcoder based on the :http:header:`Accept`
+        header from the request.
 
         """
         settings = get_settings(self.application, force_instance=True)
-        handler = settings[self.get_response_content_type()]
-        content_type, data_bytes = handler.to_bytes(body)
-        if set_content_type:
-            self.set_header('Content-Type', content_type)
-            self.add_header('Vary', 'Accept')
-        self.write(data_bytes)
+        response_type = self.get_response_content_type()
+        if response_type is None:
+            self._logger.error('failed to find a suitable response '
+                               'content type for request')
+            self._logger.error('please set a default content type')
+            raise web.HTTPError(406)
+
+        try:
+            handler = settings[response_type]
+        except KeyError:
+            self._logger.error(
+                'no transcoder for the selected response content type %s, '
+                'is the default content type %r correct?', response_type,
+                settings.default_content_type)
+            raise web.HTTPError(500)
+        else:
+            content_type, data_bytes = handler.to_bytes(body)
+            if set_content_type:
+                self.set_header('Content-Type', content_type)
+                self.add_header('Vary', 'Accept')
+            self.write(data_bytes)

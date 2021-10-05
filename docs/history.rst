@@ -1,6 +1,14 @@
 Version History
 ===============
 
+:compare:`Next <3.0.4...master>`
+--------------------------------
+- Add type annotations (see :ref:`type-info`)
+- Return a "406 Not Acceptable" if the :http:header:`Accept` header values cannot be matched
+  and there is no default content type configured
+- Deprecate not having a default content type configured
+- Fail gracefully when a transcoder does not exist for the default content type
+
 :compare:`3.0.4 <3.0.3...3.0.4>` (2 Nov 2020)
 ---------------------------------------------
 - Return a "400 Bad Request" when an invalid Content-Type header is received
