@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import decimal
 import typing
 import uuid
 
@@ -27,7 +28,8 @@ class SupportsSettings(Protocol):
 
 Serializable = typing.Union[SupportsIsoFormat, None, bool, bytearray, bytes,
                             float, int, memoryview, str, typing.Mapping,
-                            typing.Sequence, typing.Set, uuid.UUID]
+                            typing.Sequence, typing.Set, uuid.UUID,
+                            decimal.Decimal]
 """Types that can be serialized by this library.
 
 This is the set of types that

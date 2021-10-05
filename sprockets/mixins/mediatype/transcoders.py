@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import dataclasses
+import decimal
 import json
 import string
 import typing
@@ -85,7 +86,8 @@ class JSONTranscoder(handlers.TextContentHandler):
         return typing.cast(type_info.Deserialized,
                            json.loads(str_repr, **self.load_options))
 
-    def dump_object(self, obj: type_info.Serializable) -> str:
+    def dump_object(self,
+                    obj: type_info.Serializable) -> typing.Union[str, float]:
         """
         Called to encode unrecognized object.
 
@@ -111,6 +113,8 @@ class JSONTranscoder(handlers.TextContentHandler):
         +----------------------------+---------------------------------------+
         | :class:`uuid.UUID`         | Same as ``str(value)``                |
         +----------------------------+---------------------------------------+
+        | :class:`decimal.Decimal`   | Same as ``float(value)``              |
+        +----------------------------+---------------------------------------+
 
         """
         if isinstance(obj, uuid.UUID):
@@ -119,6 +123,8 @@ class JSONTranscoder(handlers.TextContentHandler):
             return typing.cast(type_info.SupportsIsoFormat, obj).isoformat()
         if isinstance(obj, (bytes, bytearray, memoryview)):
             return base64.b64encode(obj).decode('ASCII')
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
         raise TypeError('{!r} is not JSON serializable'.format(obj))
 
 
@@ -196,6 +202,8 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-----------------------------------+-------------------------------+
         | :class:`uuid.UUID`                | Converted to String           |
         +-----------------------------------+-------------------------------+
+        | :class:`decimal.Decimal`          | `float family`_               |
+        +-----------------------------------+-------------------------------+
 
         .. _nil byte: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
@@ -220,6 +228,9 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         """
         if datum is None:
             return datum
+
+        if isinstance(datum, decimal.Decimal):
+            datum = float(datum)
 
         if isinstance(datum, self.PACKABLE_TYPES):
             return datum
@@ -298,7 +309,8 @@ class FormUrlEncodedTranscoder:
     +----------------------------+---------------------------------------+
     | :data:`None`               | the empty string                      |
     +----------------------------+---------------------------------------+
-    | numbers                    | ``str(n)``                            |
+    | numbers including          | ``str(n)``                            |
+    | :class:`decimal.Decimal`   |                                       |
     +----------------------------+---------------------------------------+
     | byte sequences             | percent-encoded bytes                 |
     +----------------------------+---------------------------------------+
