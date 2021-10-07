@@ -3,13 +3,17 @@ Bundled media type transcoders.
 
 - :class:`.JSONTranscoder` implements JSON encoding/decoding
 - :class:`.MsgPackTranscoder` implements msgpack encoding/decoding
+- :class:`.FormUrlEncodedTranscoder` implements the venerable form encoding
 
 """
 from __future__ import annotations
 
 import base64
+import dataclasses
 import json
+import string
 import typing
+import urllib.parse
 import uuid
 
 import collections.abc
@@ -20,6 +24,14 @@ except ImportError:  # pragma: no cover
     umsgpack = None  # type: ignore
 
 from sprockets.mixins.mediatype import handlers, type_info
+
+_FORM_URLENCODING = {c: '%{:02X}'.format(c) for c in range(0, 255)}
+_FORM_URLENCODING.update({ord(c): c for c in string.ascii_letters})
+_FORM_URLENCODING.update({ord(c): c for c in string.digits})
+_FORM_URLENCODING.update({ord(c): c for c in '*-_.'})
+
+_FORM_URLENCODING_PLUS = _FORM_URLENCODING.copy()
+_FORM_URLENCODING_PLUS[ord(' ')] = '+'
 
 
 class JSONTranscoder(handlers.TextContentHandler):
@@ -238,3 +250,156 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
 
         raise TypeError('{} is not msgpackable'.format(
             datum.__class__.__name__))
+
+
+@dataclasses.dataclass
+class FormUrlEncodingOptions:
+    """Configuration knobs for :class:`.FormUrlEncodedTranscoder`"""
+    encoding: str = 'utf-8'
+    """Encoding use when generating the byte stream from character data."""
+
+    literal_mapping: dict[typing.Literal[None, True, False],
+                          str] = dataclasses.field(default_factory=lambda: {
+                              None: '',
+                              True: 'true',
+                              False: 'false'
+                          })
+    """Mapping from supported literal values to strings."""
+
+    space_as_plus: bool = False
+    """Quote spaces as ``%20`` or ``+``."""
+
+
+class FormUrlEncodedTranscoder:
+    """Opinionated transcoder for the venerable x-www-formurlencoded.
+
+    This transcoder implements transcoding according to the current
+    W3C documentation.
+
+    * character strings are encoded as UTF-8 codepoints before
+      percent-encoding the resulting bytes
+    * the space character is represented as ``%20``
+    * :data:`False` is represented as ``false``
+    * :data:`True` is represented as ``true``
+    * :data:`None` is represented as the empty string
+
+    Some of the opinions can be changed by modifying ``self.options``.
+
+    https://url.spec.whatwg.org/#application/x-www-form-urlencoded
+
+    .. attribute:: options
+       :type: FormUrlEncodingOptions
+
+       Controls the behavior of the transcoder
+
+    """
+    content_type = 'application/x-www-formurlencoded'
+
+    def __init__(self) -> None:
+        self.options = FormUrlEncodingOptions()
+
+    def to_bytes(
+            self,
+            inst_data: type_info.Serializable,
+            encoding: typing.Optional[str] = None) -> typing.Tuple[str, bytes]:
+        """Serialize `inst_data` into a byte stream and content type spec.
+
+        :param inst_data: the data to serialize
+        :param encoding: optional encoding override
+
+        Serialization is implemented as described in the W3C
+        `urlencoded serialization`_ algorithm.  The :attr:`.options`
+        attribute controls the configurable details of the encoding
+        process.
+
+        The character encoding can be further overridden by specifying the
+        `encoding` parameter.
+
+        :returns: tuple of the content type and the resulting bytes
+        :raises: :exc:`TypeError` if a supplied value cannot be serialized
+
+        .. _urlencoded serialization: https://url.spec.whatwg.org/
+           #urlencoded-serializing
+
+        """
+        # Generate a sequence of name+value tuples to encode
+        if isinstance(inst_data, collections.abc.Mapping):
+            tuples = ((self._normalize(a), self._normalize(b))
+                      for a, b in inst_data.items())
+        else:
+            tuples = ((self._normalize(a), self._normalize(b))
+                      for a, b in inst_data)
+
+        # Encode each pair and run the encoded form through the
+        # appropriate octet to string mapping table
+        chr_map: typing.Mapping[int, str]
+        chr_map = (_FORM_URLENCODING_PLUS
+                   if self.options.space_as_plus else _FORM_URLENCODING)
+        if encoding is None:
+            encoding = self.options.encoding
+        prefix = ''  # micro-optimization removes if statement from inner loop
+        buf = []
+        for name, value in tuples:
+            buf.append(prefix)
+            buf.extend(chr_map[c] for c in name.encode(encoding))
+            buf.append('=')
+            buf.extend(chr_map[c] for c in value.encode(encoding))
+            prefix = '&'
+
+        return self.content_type, ''.join(buf).encode('ascii')
+
+    def from_bytes(
+            self,
+            data_bytes: bytes,
+            encoding: typing.Optional[str] = None) -> type_info.Deserialized:
+        """Deserialize `bytes` into a Python object instance.
+
+        :param data_bytes: byte string to deserialize
+        :param encoding: optional encoding override
+
+        Deserialization is implemented according to the W3C
+        `urlencoded deserialization`_ algorithm.  The :attr:`.options`
+        attribute controls the configurable details of the encoding
+        process.
+
+        :returns: the decoded Python object
+
+        .. _urlencoded deserialization: https://url.spec.whatwg.org/
+           #urlencoded-parsing
+
+        """
+        dequote = (urllib.parse.unquote_plus
+                   if self.options.space_as_plus else urllib.parse.unquote)
+        if encoding is None:
+            encoding = self.options.encoding
+
+        output = []
+        for part in data_bytes.decode('ascii').split('&'):
+            if not part:
+                continue
+            name, eq_present, value = part.partition('=')
+            name = dequote(name, encoding=encoding)
+            if eq_present:
+                output.append((name, dequote(value, encoding=encoding)))
+            else:
+                output.append((name, ''))
+
+        return dict(output)
+
+    def _normalize(
+        self, datum: typing.Union[bool, None, float, int, str,
+                                  type_info.DefinesIsoFormat]
+    ) -> str:
+        try:
+            datum = self.options.literal_mapping[datum]  # type: ignore
+        except (KeyError, TypeError):
+            if isinstance(datum, (float, int, str)):
+                datum = str(datum)
+            elif hasattr(datum, 'isoformat'):
+                datum = datum.isoformat()
+            else:
+                raise TypeError(
+                    f'{datum.__class__.__name__} is not serializable'
+                ) from None
+
+        return datum

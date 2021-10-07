@@ -54,6 +54,12 @@ Bundled Transcoders
 .. autoclass:: MsgPackTranscoder
    :members:
 
+.. autoclass:: FormUrlEncodedTranscoder
+   :members:
+
+.. autoclass:: FormUrlEncodingOptions
+   :members:
+
 .. _type-info:
 
 Python Type Information
