@@ -636,3 +636,10 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         for value, expected in expectations.items():
             _, result = self.transcoder.to_bytes(value)
             self.assertEqual(expected, result)
+
+    def test_serialization_with_empty_literal_map(self):
+        self.transcoder: transcoders.FormUrlEncodedTranscoder
+        self.transcoder.options.literal_mapping.clear()
+        for value in {None, True, False}:
+            with self.assertRaises(TypeError):
+                self.transcoder.to_bytes(value)

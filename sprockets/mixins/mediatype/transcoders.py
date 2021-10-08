@@ -398,6 +398,10 @@ class FormUrlEncodedTranscoder:
         try:
             datum = self.options.literal_mapping[datum]  # type: ignore
         except (KeyError, TypeError):
+            if datum in {None, True, False}:
+                raise TypeError(
+                    f'{datum.__class__.__name__} is not serializable'
+                ) from None
             if isinstance(datum, (float, int, str)):
                 datum = str(datum)
             elif hasattr(datum, 'isoformat'):
