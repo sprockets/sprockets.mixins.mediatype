@@ -589,7 +589,7 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
             ('', None),
             ('name', None),
         ])
-        self.assertEqual(b'=&=true&=false&=&name=', result)
+        self.assertEqual(b'=&=true&=false&&name', result)
 
     def test_serialization_using_plusses(self):
         self.transcoder: transcoders.FormUrlEncodedTranscoder
@@ -641,5 +641,11 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         self.transcoder: transcoders.FormUrlEncodedTranscoder
         self.transcoder.options.literal_mapping.clear()
         for value in {None, True, False}:
+            with self.assertRaises(TypeError):
+                self.transcoder.to_bytes(value)
+
+    def test_serialization_of_sequences(self):
+        sequence = [[1, 2, 3], {1, 2, 3}, (1, 2, 3)]
+        for value in sequence:
             with self.assertRaises(TypeError):
                 self.transcoder.to_bytes(value)

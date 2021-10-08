@@ -323,36 +323,35 @@ class FormUrlEncodedTranscoder:
 
         """
         # Select the appropriate encoding table and use the default
-        # character encoding if necessary.  Binding these to locals
-        # removes branches from the inner loop.
+        # character encoding if necessary.  Binding these to local
+        # names removes branches from the inner loop.
         chr_map: typing.Mapping[int, str]
         chr_map = (_FORM_URLENCODING_PLUS
                    if self.options.space_as_plus else _FORM_URLENCODING)
         if encoding is None:
             encoding = self.options.encoding
 
-        # Generate a sequence of name+value tuples to encode
-        if isinstance(inst_data, type_info.SerializablePrimitives):
-            encoded = self._encode(inst_data, chr_map, encoding)
-            return self.content_type, encoded.encode('ascii')
+        # Generate a sequence of name+value tuples to encode or
+        # directly encode primitives
+        try:
+            tuples = self._convert_to_tuple_sequence(inst_data)
+        except TypeError:
+            # hopefully this is a primitive ... if not then the
+            # call to _encode will fail below
+            tuples = [(inst_data, None)]
 
-        if isinstance(inst_data, collections.abc.Mapping):
-            tuples = inst_data.items()
-        else:
-            tuples = inst_data
-
-        # Encode each pair and run the encoded form through the
-        # appropriate octet to string mapping table
-        prefix = ''  # micro-optimization removes if statement from inner loop
+        prefix = ''  # another micro-optimization
         buf = []
         for name, value in tuples:
             buf.append(prefix)
             buf.extend(self._encode(name, chr_map, encoding))
-            buf.append('=')
-            buf.extend(self._encode(value, chr_map, encoding))
+            if value is not None:
+                buf.append('=')
+                buf.extend(self._encode(value, chr_map, encoding))
             prefix = '&'
+        encoded = ''.join(buf)
 
-        return self.content_type, ''.join(buf).encode('ascii')
+        return self.content_type, encoded.encode('ascii')
 
     def from_bytes(
             self,
@@ -398,19 +397,32 @@ class FormUrlEncodedTranscoder:
         try:
             datum = self.options.literal_mapping[datum]  # type: ignore
         except (KeyError, TypeError):
-            if datum in {None, True, False}:
+            if isinstance(datum, (bytearray, bytes, memoryview)):
+                return ''.join(char_map[c] for c in datum)
+
+            if datum is None or isinstance(datum, bool):
                 raise TypeError(
                     f'{datum.__class__.__name__} is not serializable'
                 ) from None
+
             if isinstance(datum, (float, int, str)):
                 datum = str(datum)
-            elif hasattr(datum, 'isoformat'):
+            elif datum is not None and hasattr(datum, 'isoformat'):
                 datum = datum.isoformat()
-            elif isinstance(datum, (bytearray, bytes, memoryview)):
-                return ''.join(char_map[c] for c in datum)
             else:
                 raise TypeError(
                     f'{datum.__class__.__name__} is not serializable'
                 ) from None
 
         return ''.join(char_map[c] for c in datum.encode(encoding))
+
+    @staticmethod
+    def _convert_to_tuple_sequence(
+        value: type_info.Serializable
+    ) -> typing.Iterable[typing.Tuple[typing.Any, typing.Any]]:
+        if isinstance(value, collections.abc.Mapping):
+            return value.items()
+        try:
+            return [(a, b) for a, b in value]  # type: ignore
+        except (TypeError, ValueError):
+            raise TypeError
