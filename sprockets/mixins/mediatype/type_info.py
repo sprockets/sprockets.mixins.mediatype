@@ -24,6 +24,10 @@ class HasSettings(Protocol):
     """Application settings."""
 
 
+SerializablePrimitives = (type(None), bool, bytearray, bytes, float, int,
+                          memoryview, str, uuid.UUID)
+"""Use this with isinstance to identify simple values."""
+
 Serializable = typing.Union[DefinesIsoFormat, None, bool, bytearray, bytes,
                             float, int, memoryview, str, typing.Mapping,
                             typing.Sequence, typing.Set, uuid.UUID]

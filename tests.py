@@ -621,3 +621,18 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         expected = f'test_string={expected}'.encode()
         _, result = self.transcoder.to_bytes({'test_string': test_string})
         self.assertEqual(expected, result)
+
+    def test_serialization_of_primitives(self):
+        expectations = {
+            None: b'',
+            'a string': b'a%20string',
+            10: b'10',
+            2.3: str(2.3).encode(),
+            True: b'true',
+            False: b'false',
+            b'\xfe\xed\xfa\xce': b'%FE%ED%FA%CE',
+            memoryview(b'\xfe\xed\xfa\xce'): b'%FE%ED%FA%CE',
+        }
+        for value, expected in expectations.items():
+            _, result = self.transcoder.to_bytes(value)
+            self.assertEqual(expected, result)
