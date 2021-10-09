@@ -561,11 +561,13 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
 
     def test_simple_serialization(self):
         now = datetime.datetime.now()
+        id_val = uuid.uuid4()
         content_type, result = self.transcoder.to_bytes({
             'integer': 12,
             'float': math.pi,
             'string': 'percent quoted',
             'datetime': now,
+            'id': id_val,
         })
         self.assertEqual(content_type, 'application/x-www-formurlencoded')
         self.assertEqual(
@@ -574,6 +576,7 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
                 f'float={math.pi}',
                 'string=percent%20quoted',
                 'datetime=' + now.isoformat().replace(':', '%3A'),
+                f'id={id_val}',
             ]))
 
     def test_that_serialization_encoding_can_be_overridden(self):
@@ -623,6 +626,7 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         self.assertEqual(expected, result)
 
     def test_serialization_of_primitives(self):
+        id_val = uuid.uuid4()
         expectations = {
             None: b'',
             'a string': b'a%20string',
@@ -632,6 +636,7 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
             False: b'false',
             b'\xfe\xed\xfa\xce': b'%FE%ED%FA%CE',
             memoryview(b'\xfe\xed\xfa\xce'): b'%FE%ED%FA%CE',
+            id_val: str(id_val).encode(),
         }
         for value, expected in expectations.items():
             _, result = self.transcoder.to_bytes(value)

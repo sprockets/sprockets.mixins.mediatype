@@ -405,7 +405,7 @@ class FormUrlEncodedTranscoder:
                     f'{datum.__class__.__name__} is not serializable'
                 ) from None
 
-            if isinstance(datum, (float, int, str)):
+            if isinstance(datum, (float, int, str, uuid.UUID)):
                 datum = str(datum)
             elif datum is not None and hasattr(datum, 'isoformat'):
                 datum = datum.isoformat()
