@@ -394,25 +394,23 @@ class FormUrlEncodedTranscoder:
     def _encode(self, datum: typing.Union[bool, None, float, int, str,
                                           type_info.DefinesIsoFormat],
                 char_map: typing.Mapping[int, str], encoding: str) -> str:
-        try:
-            datum = self.options.literal_mapping[datum]  # type: ignore
-        except (KeyError, TypeError):
-            if isinstance(datum, (bytearray, bytes, memoryview)):
-                return ''.join(char_map[c] for c in datum)
-
-            if datum is None or isinstance(datum, bool):
-                raise TypeError(
-                    f'{datum.__class__.__name__} is not serializable'
-                ) from None
-
-            if isinstance(datum, (float, int, str, uuid.UUID)):
-                datum = str(datum)
-            elif datum is not None and hasattr(datum, 'isoformat'):
-                datum = datum.isoformat()
-            else:
-                raise TypeError(
-                    f'{datum.__class__.__name__} is not serializable'
-                ) from None
+        if isinstance(datum, str):
+            pass  # optimization: skip additional checks for strings
+        elif datum in self.options.literal_mapping:
+            datum = self.options.literal_mapping[datum]
+        elif isinstance(datum, (bytearray, bytes, memoryview)):
+            return ''.join(char_map[c] for c in datum)
+        elif datum is None or isinstance(datum, bool):
+            # This could happen if the user modifies the literal mapping
+            # and MUST be before the isinstance(datum, int) check since
+            # Boolean literals are integers instances
+            raise TypeError(f'{datum.__class__.__name__} is not serializable')
+        elif isinstance(datum, (float, int, str, uuid.UUID)):
+            datum = str(datum)
+        elif hasattr(datum, 'isoformat'):
+            datum = datum.isoformat()
+        else:
+            raise TypeError(f'{datum.__class__.__name__} is not serializable')
 
         return ''.join(char_map[c] for c in datum.encode(encoding))
 
