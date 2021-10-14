@@ -274,18 +274,44 @@ class FormUrlEncodedTranscoder:
     """Opinionated transcoder for the venerable x-www-formurlencoded.
 
     This transcoder implements transcoding according to the current
-    W3C documentation.
+    W3C documentation.  The encoding interface takes mappings or
+    sequences of pairs and encodes both the name and value.  The
+    following list describes how each supported type is encoded.
+    Any value type that is not on the list will result in a
+    :exc:`TypeError`.
 
-    * character strings are encoded as UTF-8 codepoints before
-      percent-encoding the resulting bytes
-    * the space character is represented as ``%20``
-    * :data:`False` is represented as ``false``
-    * :data:`True` is represented as ``true``
-    * :data:`None` is represented as the empty string
-
-    Some of the opinions can be changed by modifying ``self.options``.
+    +----------------------------+---------------------------------------+
+    | Value / Type               | Encoding                              |
+    +============================+=======================================+
+    | character strings          | UTF-8 codepoints before percent-      |
+    |                            | encoding the resulting bytes          |
+    +----------------------------+---------------------------------------+
+    | space character            | ``%20`` or ``+``                      |
+    +----------------------------+---------------------------------------+
+    | :data:`False`              | ``false``                             |
+    +----------------------------+---------------------------------------+
+    | :data:`True`               | ``true``                              |
+    +----------------------------+---------------------------------------+
+    | :data:`None`               | the empty string                      |
+    +----------------------------+---------------------------------------+
+    | numbers                    | ``str(n)``                            |
+    +----------------------------+---------------------------------------+
+    | byte sequences             | percent-encoded bytes                 |
+    +----------------------------+---------------------------------------+
+    | :class:`uuid.UUID`         | ``str(u)``                            |
+    +----------------------------+---------------------------------------+
+    | :class:`datetime.datetime` | result of calling                     |
+    |                            | :meth:`~datetime.datetime.isoformat`  |
+    +----------------------------+---------------------------------------+
 
     https://url.spec.whatwg.org/#application/x-www-form-urlencoded
+
+    .. warning::
+
+       Types that are not explicitly mentioned above will result in
+       :meth:`to_bytes` raising a :exc:`TypeError`.  This transcoder
+       differs slightly from others in that it does not include
+       support for encoding values that are nested collections.
 
     .. attribute:: options
        :type: FormUrlEncodingOptions
@@ -423,4 +449,4 @@ class FormUrlEncodedTranscoder:
         try:
             return [(a, b) for a, b in value]  # type: ignore
         except (TypeError, ValueError):
-            raise TypeError
+            raise TypeError('Cannot convert value to sequence of tuples')
