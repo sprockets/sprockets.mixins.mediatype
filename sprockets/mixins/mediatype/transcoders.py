@@ -276,6 +276,9 @@ class FormUrlEncodingOptions:
 class FormUrlEncodedTranscoder:
     """Opinionated transcoder for the venerable x-www-formurlencoded.
 
+    :param encoding_options: keyword parameters are used to initialize
+        :class:`FormUrlEncodingOptions`
+
     This transcoder implements transcoding according to the current
     W3C documentation.  The encoding interface takes mappings or
     sequences of pairs and encodes both the name and value.  The
@@ -329,8 +332,8 @@ class FormUrlEncodedTranscoder:
     """
     content_type = 'application/x-www-formurlencoded'
 
-    def __init__(self) -> None:
-        self.options = FormUrlEncodingOptions()
+    def __init__(self, **encoding_options) -> None:
+        self.options = FormUrlEncodingOptions(**encoding_options)
 
     def to_bytes(
             self,
