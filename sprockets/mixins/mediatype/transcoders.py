@@ -258,6 +258,9 @@ class FormUrlEncodingOptions:
     encoding: str = 'utf-8'
     """Encoding use when generating the byte stream from character data."""
 
+    encode_sequences: bool = False
+    """Encode sequence values as multiple name=value instances."""
+
     literal_mapping: dict[typing.Literal[None, True, False],
                           str] = dataclasses.field(default_factory=lambda: {
                               None: '',
@@ -311,7 +314,12 @@ class FormUrlEncodedTranscoder:
        Types that are not explicitly mentioned above will result in
        :meth:`to_bytes` raising a :exc:`TypeError`.  This transcoder
        differs slightly from others in that it does not include
-       support for encoding values that are nested collections.
+       support for encoding values that are nested collections without
+       explicit configuration.
+
+       Support for sequence values can be enabled by setting the
+       :attr:`~FormUrlEncodingOptions.encode_sequences` attribute of
+       :attr:`.options`.
 
     .. attribute:: options
        :type: FormUrlEncodingOptions
@@ -422,6 +430,9 @@ class FormUrlEncodedTranscoder:
                 char_map: typing.Mapping[int, str], encoding: str) -> str:
         if isinstance(datum, str):
             pass  # optimization: skip additional checks for strings
+        elif (isinstance(datum, (float, int, str, uuid.UUID))
+              and not isinstance(datum, bool)):
+            datum = str(datum)
         elif datum in self.options.literal_mapping:
             datum = self.options.literal_mapping[datum]
         elif isinstance(datum, (bytearray, bytes, memoryview)):
@@ -431,8 +442,6 @@ class FormUrlEncodedTranscoder:
             # and MUST be before the isinstance(datum, int) check since
             # Boolean literals are integers instances
             raise TypeError(f'{datum.__class__.__name__} is not serializable')
-        elif isinstance(datum, (float, int, str, uuid.UUID)):
-            datum = str(datum)
         elif hasattr(datum, 'isoformat'):
             datum = datum.isoformat()
         else:
@@ -440,13 +449,25 @@ class FormUrlEncodedTranscoder:
 
         return ''.join(char_map[c] for c in datum.encode(encoding))
 
-    @staticmethod
     def _convert_to_tuple_sequence(
-        value: type_info.Serializable
+        self, value: type_info.Serializable
     ) -> typing.Iterable[typing.Tuple[typing.Any, typing.Any]]:
         if isinstance(value, collections.abc.Mapping):
-            return value.items()
-        try:
-            return [(a, b) for a, b in value]  # type: ignore
-        except (TypeError, ValueError):
-            raise TypeError('Cannot convert value to sequence of tuples')
+            tuples = value.items()
+        else:
+            try:
+                tuples = [(a, b) for a, b in value]  # type: ignore
+            except (TypeError, ValueError):
+                raise TypeError('Cannot convert value to sequence of tuples')
+
+        if self.options.encode_sequences:
+            tuples, in_tuples = [], tuples
+            for a, b in in_tuples:
+                if (not isinstance(b, (bytes, bytearray, memoryview, str))
+                        and isinstance(b, collections.abc.Iterable)):
+                    for value in b:
+                        tuples.append((a, value))
+                else:
+                    tuples.append((a, b))
+
+        return tuples

@@ -679,7 +679,22 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
                 self.transcoder.to_bytes(value)
 
     def test_serialization_of_sequences(self):
-        sequence = [[1, 2, 3], {1, 2, 3}, (1, 2, 3)]
-        for value in sequence:
+        self.transcoder: transcoders.FormUrlEncodedTranscoder
+
+        always_illegal = [[1, 2, 3], {1, 2, 3}, (1, 2, 3)]
+
+        self.transcoder.options.encode_sequences = False
+        for value in always_illegal:
             with self.assertRaises(TypeError):
                 self.transcoder.to_bytes(value)
+
+        self.transcoder.options.encode_sequences = True
+        for value in always_illegal:
+            with self.assertRaises(TypeError):
+                self.transcoder.to_bytes(value)
+
+        self.transcoder.options.encode_sequences = True
+        value = {'list': [1, 2], 'tuple': (1, 2), 'set': {1, 2}, 'str': 'val'}
+        _, result = self.transcoder.to_bytes(value)
+        self.assertEqual(b'list=1&list=2&tuple=1&tuple=2&set=1&set=2&str=val',
+                         result)
