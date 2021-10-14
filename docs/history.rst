@@ -9,6 +9,8 @@ Version History
   and there is no default content type configured
 - Deprecate not having a default content type configured
 - Fail gracefully when a transcoder does not exist for the default content type
+- Fail gracefully when a transcoder raises a :exc:`TypeError` or :exc:`ValueError` when encoding
+  the response
 
 .. _application/x-www-formurlencoded: https://url.spec.whatwg.org/#application/x-www-form-urlencoded
 

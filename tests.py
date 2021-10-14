@@ -177,6 +177,35 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         self.assertEqual('application/foo+json',
                          response.headers.get('Content-Type'))
 
+    def test_that_transcoder_failures_result_in_500(self):
+        class FailingTranscoder:
+            content_type = 'application/vnd.com.example.bad'
+
+            def __init__(self):
+                self.exc_class = TypeError
+
+            def to_bytes(self, inst_data, encoding=None):
+                raise self.exc_class('I always fail at this')
+
+            def from_bytes(self, data_bytes, encoding=None):
+                return {}
+
+        transcoder = FailingTranscoder()
+        content.add_transcoder(self.application, transcoder)
+        for _ in range(2):
+            response = self.fetch(
+                '/',
+                method='POST',
+                body=b'{}',
+                headers={
+                    'Accept': 'application/vnd.com.example.bad',
+                    'Content-Type': 'application/json',
+                },
+            )
+            self.assertEqual(500, response.code)
+            self.assertEqual('Response Encoding Failure', response.reason)
+            transcoder.exc_class = ValueError
+
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
     def setUp(self):
