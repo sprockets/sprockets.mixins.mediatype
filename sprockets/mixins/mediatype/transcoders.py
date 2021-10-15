@@ -282,9 +282,7 @@ class FormUrlEncodedTranscoder:
     This transcoder implements transcoding according to the current
     W3C documentation.  The encoding interface takes mappings or
     sequences of pairs and encodes both the name and value.  The
-    following list describes how each supported type is encoded.
-    Any value type that is not on the list will result in a
-    :exc:`TypeError`.
+    following table describes how each supported type is encoded.
 
     +----------------------------+---------------------------------------+
     | Value / Type               | Encoding                              |
@@ -315,14 +313,16 @@ class FormUrlEncodedTranscoder:
     .. warning::
 
        Types that are not explicitly mentioned above will result in
-       :meth:`to_bytes` raising a :exc:`TypeError`.  This transcoder
-       differs slightly from others in that it does not include
-       support for encoding values that are nested collections without
-       explicit configuration.
+       :meth:`to_bytes` simply calling ``str(value)`` and encoding
+       the result.  This causes nested sequences to be encoded as
+       their ``repr``.  For example, encoding ``{'a': [1, 2]}`` will
+       result in ``a=%5B1%2C%202%5D``.  This matches what
+       :func:`urllib.parse.urlencode` does by default.
 
-       Support for sequence values can be enabled by setting the
-       :attr:`~FormUrlEncodingOptions.encode_sequences` attribute of
-       :attr:`.options`.
+       Better support for sequence values can be enabled by setting
+       the :attr:`~FormUrlEncodingOptions.encode_sequences` attribute
+       of :attr:`.options`.  This mimics the ``doseq`` parameter of
+       :func:`urllib,parse.urlencode`.
 
     .. attribute:: options
        :type: FormUrlEncodingOptions
@@ -332,7 +332,7 @@ class FormUrlEncodedTranscoder:
     """
     content_type = 'application/x-www-formurlencoded'
 
-    def __init__(self, **encoding_options) -> None:
+    def __init__(self, **encoding_options: typing.Any) -> None:
         self.options = FormUrlEncodingOptions(**encoding_options)
 
     def to_bytes(
@@ -436,25 +436,23 @@ class FormUrlEncodedTranscoder:
         elif (isinstance(datum, (float, int, str, uuid.UUID))
               and not isinstance(datum, bool)):
             datum = str(datum)
-        elif datum in self.options.literal_mapping:
-            datum = self.options.literal_mapping[datum]
+        elif (isinstance(datum, collections.abc.Hashable)
+              and datum in self.options.literal_mapping):
+            # the isinstance Hashable check confuses mypy
+            datum = self.options.literal_mapping[datum]  # type: ignore
         elif isinstance(datum, (bytearray, bytes, memoryview)):
             return ''.join(char_map[c] for c in datum)
-        elif datum is None or isinstance(datum, bool):
-            # This could happen if the user modifies the literal mapping
-            # and MUST be before the isinstance(datum, int) check since
-            # Boolean literals are integers instances
-            raise TypeError(f'{datum.__class__.__name__} is not serializable')
-        elif hasattr(datum, 'isoformat'):
+        elif isinstance(datum, type_info.DefinesIsoFormat):
             datum = datum.isoformat()
         else:
-            raise TypeError(f'{datum.__class__.__name__} is not serializable')
+            datum = str(datum)
 
         return ''.join(char_map[c] for c in datum.encode(encoding))
 
     def _convert_to_tuple_sequence(
         self, value: type_info.Serializable
     ) -> typing.Iterable[typing.Tuple[typing.Any, typing.Any]]:
+        tuples: typing.Iterable[typing.Tuple[typing.Any, typing.Any]]
         if isinstance(value, collections.abc.Mapping):
             tuples = value.items()
         else:
@@ -464,13 +462,14 @@ class FormUrlEncodedTranscoder:
                 raise TypeError('Cannot convert value to sequence of tuples')
 
         if self.options.encode_sequences:
-            tuples, in_tuples = [], tuples
-            for a, b in in_tuples:
+            out_tuples = []
+            for a, b in tuples:
                 if (not isinstance(b, (bytes, bytearray, memoryview, str))
                         and isinstance(b, collections.abc.Iterable)):
                     for value in b:
-                        tuples.append((a, value))
+                        out_tuples.append((a, value))
                 else:
-                    tuples.append((a, b))
+                    out_tuples.append((a, b))
+            tuples = out_tuples
 
         return tuples

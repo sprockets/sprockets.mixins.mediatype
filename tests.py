@@ -634,9 +634,13 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         _, result = self.transcoder.to_bytes({'value': 'with space'})
         self.assertEqual(b'value=with%20space', result)
 
-    def test_that_serializing_unsupported_types_fails(self):
-        with self.assertRaises(TypeError):
-            self.transcoder.to_bytes({'unsupported': object()})
+    def test_that_serializing_unsupported_types_stringifies(self):
+        obj = object()
+        # quick & dirty URL encoding
+        expected = str(obj).translate({0x20: '%20', 0x3C: '%3C', 0x3E: '%3E'})
+
+        _, result = self.transcoder.to_bytes({'unsupported': obj})
+        self.assertEqual(f'unsupported={expected}'.encode(), result)
 
     def test_that_required_octets_are_encoded(self):
         # build the set of all characters required to be encoded by
@@ -675,26 +679,20 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         self.transcoder: transcoders.FormUrlEncodedTranscoder
         self.transcoder.options.literal_mapping.clear()
         for value in {None, True, False}:
-            with self.assertRaises(TypeError):
-                self.transcoder.to_bytes(value)
+            _, result = self.transcoder.to_bytes(value)
+            self.assertEqual(str(value).encode(), result)
 
     def test_serialization_of_sequences(self):
         self.transcoder: transcoders.FormUrlEncodedTranscoder
 
-        always_illegal = [[1, 2, 3], {1, 2, 3}, (1, 2, 3)]
+        value = {'list': [1, 2], 'tuple': (1, 2), 'set': {1, 2}, 'str': 'val'}
 
         self.transcoder.options.encode_sequences = False
-        for value in always_illegal:
-            with self.assertRaises(TypeError):
-                self.transcoder.to_bytes(value)
+        _, result = self.transcoder.to_bytes(value)
+        self.assertEqual((b'list=%5B1%2C%202%5D&tuple=%281%2C%202%29'
+                          b'&set=%7B1%2C%202%7D&str=val'), result)
 
         self.transcoder.options.encode_sequences = True
-        for value in always_illegal:
-            with self.assertRaises(TypeError):
-                self.transcoder.to_bytes(value)
-
-        self.transcoder.options.encode_sequences = True
-        value = {'list': [1, 2], 'tuple': (1, 2), 'set': {1, 2}, 'str': 'val'}
         _, result = self.transcoder.to_bytes(value)
         self.assertEqual(b'list=1&list=2&tuple=1&tuple=2&set=1&set=2&str=val',
                          result)
