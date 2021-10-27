@@ -423,8 +423,15 @@ class ContentMixin(web.RequestHandler):
                 settings.default_content_type)
             raise web.HTTPError(500)
         else:
-            content_type, data_bytes = handler.to_bytes(body)
-            if set_content_type:
-                self.set_header('Content-Type', content_type)
-                self.add_header('Vary', 'Accept')
-            self.write(data_bytes)
+            try:
+                content_type, data_bytes = handler.to_bytes(body)
+            except (TypeError, ValueError) as e:
+                self._logger.error(
+                    'selected transcoder (%s) failed to encode response '
+                    'body: %s', handler.__class__.__name__, e)
+                raise web.HTTPError(500, reason='Response Encoding Failure')
+            else:
+                if set_content_type:
+                    self.set_header('Content-Type', content_type)
+                    self.add_header('Vary', 'Accept')
+                self.write(data_bytes)

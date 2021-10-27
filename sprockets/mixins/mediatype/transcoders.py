@@ -3,13 +3,17 @@ Bundled media type transcoders.
 
 - :class:`.JSONTranscoder` implements JSON encoding/decoding
 - :class:`.MsgPackTranscoder` implements msgpack encoding/decoding
+- :class:`.FormUrlEncodedTranscoder` implements the venerable form encoding
 
 """
 from __future__ import annotations
 
 import base64
+import dataclasses
 import json
+import string
 import typing
+import urllib.parse
 import uuid
 
 import collections.abc
@@ -20,6 +24,14 @@ except ImportError:  # pragma: no cover
     umsgpack = None  # type: ignore
 
 from sprockets.mixins.mediatype import handlers, type_info
+
+_FORM_URLENCODING = {c: '%{:02X}'.format(c) for c in range(0, 255)}
+_FORM_URLENCODING.update({ord(c): c for c in string.ascii_letters})
+_FORM_URLENCODING.update({ord(c): c for c in string.digits})
+_FORM_URLENCODING.update({ord(c): c for c in '*-_.'})
+
+_FORM_URLENCODING_PLUS = _FORM_URLENCODING.copy()
+_FORM_URLENCODING_PLUS[ord(' ')] = '+'
 
 
 class JSONTranscoder(handlers.TextContentHandler):
@@ -238,3 +250,226 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
 
         raise TypeError('{} is not msgpackable'.format(
             datum.__class__.__name__))
+
+
+@dataclasses.dataclass
+class FormUrlEncodingOptions:
+    """Configuration knobs for :class:`.FormUrlEncodedTranscoder`"""
+    encoding: str = 'utf-8'
+    """Encoding use when generating the byte stream from character data."""
+
+    encode_sequences: bool = False
+    """Encode sequence values as multiple name=value instances."""
+
+    literal_mapping: dict[typing.Literal[None, True, False],
+                          str] = dataclasses.field(default_factory=lambda: {
+                              None: '',
+                              True: 'true',
+                              False: 'false'
+                          })
+    """Mapping from supported literal values to strings."""
+
+    space_as_plus: bool = False
+    """Quote spaces as ``%20`` or ``+``."""
+
+
+class FormUrlEncodedTranscoder:
+    """Opinionated transcoder for the venerable x-www-formurlencoded.
+
+    :param encoding_options: keyword parameters are used to initialize
+        :class:`FormUrlEncodingOptions`
+
+    This transcoder implements transcoding according to the current
+    W3C documentation.  The encoding interface takes mappings or
+    sequences of pairs and encodes both the name and value.  The
+    following table describes how each supported type is encoded.
+
+    +----------------------------+---------------------------------------+
+    | Value / Type               | Encoding                              |
+    +============================+=======================================+
+    | character strings          | UTF-8 codepoints before percent-      |
+    |                            | encoding the resulting bytes          |
+    +----------------------------+---------------------------------------+
+    | space character            | ``%20`` or ``+``                      |
+    +----------------------------+---------------------------------------+
+    | :data:`False`              | ``false``                             |
+    +----------------------------+---------------------------------------+
+    | :data:`True`               | ``true``                              |
+    +----------------------------+---------------------------------------+
+    | :data:`None`               | the empty string                      |
+    +----------------------------+---------------------------------------+
+    | numbers                    | ``str(n)``                            |
+    +----------------------------+---------------------------------------+
+    | byte sequences             | percent-encoded bytes                 |
+    +----------------------------+---------------------------------------+
+    | :class:`uuid.UUID`         | ``str(u)``                            |
+    +----------------------------+---------------------------------------+
+    | :class:`datetime.datetime` | result of calling                     |
+    |                            | :meth:`~datetime.datetime.isoformat`  |
+    +----------------------------+---------------------------------------+
+
+    https://url.spec.whatwg.org/#application/x-www-form-urlencoded
+
+    .. warning::
+
+       Types that are not explicitly mentioned above will result in
+       :meth:`to_bytes` simply calling ``str(value)`` and encoding
+       the result.  This causes nested sequences to be encoded as
+       their ``repr``.  For example, encoding ``{'a': [1, 2]}`` will
+       result in ``a=%5B1%2C%202%5D``.  This matches what
+       :func:`urllib.parse.urlencode` does by default.
+
+       Better support for sequence values can be enabled by setting
+       the :attr:`~FormUrlEncodingOptions.encode_sequences` attribute
+       of :attr:`.options`.  This mimics the ``doseq`` parameter of
+       :func:`urllib,parse.urlencode`.
+
+    .. attribute:: options
+       :type: FormUrlEncodingOptions
+
+       Controls the behavior of the transcoder
+
+    """
+    content_type = 'application/x-www-formurlencoded'
+
+    def __init__(self, **encoding_options: typing.Any) -> None:
+        self.options = FormUrlEncodingOptions(**encoding_options)
+
+    def to_bytes(
+            self,
+            inst_data: type_info.Serializable,
+            encoding: typing.Optional[str] = None) -> typing.Tuple[str, bytes]:
+        """Serialize `inst_data` into a byte stream and content type spec.
+
+        :param inst_data: the data to serialize
+        :param encoding: optional encoding override
+
+        Serialization is implemented as described in the W3C
+        `urlencoded serialization`_ algorithm.  The :attr:`.options`
+        attribute controls the configurable details of the encoding
+        process.
+
+        The character encoding can be further overridden by specifying the
+        `encoding` parameter.
+
+        :returns: tuple of the content type and the resulting bytes
+        :raises: :exc:`TypeError` if a supplied value cannot be serialized
+
+        .. _urlencoded serialization: https://url.spec.whatwg.org/
+           #urlencoded-serializing
+
+        """
+        # Select the appropriate encoding table and use the default
+        # character encoding if necessary.  Binding these to local
+        # names removes branches from the inner loop.
+        chr_map: typing.Mapping[int, str]
+        chr_map = (_FORM_URLENCODING_PLUS
+                   if self.options.space_as_plus else _FORM_URLENCODING)
+        if encoding is None:
+            encoding = self.options.encoding
+
+        # Generate a sequence of name+value tuples to encode or
+        # directly encode primitives
+        try:
+            tuples = self._convert_to_tuple_sequence(inst_data)
+        except TypeError:
+            # hopefully this is a primitive ... if not then the
+            # call to _encode will fail below
+            tuples = [(inst_data, None)]
+
+        prefix = ''  # another micro-optimization
+        buf = []
+        for name, value in tuples:
+            buf.append(prefix)
+            buf.extend(self._encode(name, chr_map, encoding))
+            if value is not None:
+                buf.append('=')
+                buf.extend(self._encode(value, chr_map, encoding))
+            prefix = '&'
+        encoded = ''.join(buf)
+
+        return self.content_type, encoded.encode('ascii')
+
+    def from_bytes(
+            self,
+            data_bytes: bytes,
+            encoding: typing.Optional[str] = None) -> type_info.Deserialized:
+        """Deserialize `bytes` into a Python object instance.
+
+        :param data_bytes: byte string to deserialize
+        :param encoding: optional encoding override
+
+        Deserialization is implemented according to the W3C
+        `urlencoded deserialization`_ algorithm.  The :attr:`.options`
+        attribute controls the configurable details of the encoding
+        process.
+
+        :returns: the decoded Python object
+
+        .. _urlencoded deserialization: https://url.spec.whatwg.org/
+           #urlencoded-parsing
+
+        """
+        dequote = (urllib.parse.unquote_plus
+                   if self.options.space_as_plus else urllib.parse.unquote)
+        if encoding is None:
+            encoding = self.options.encoding
+
+        output = []
+        for part in data_bytes.decode('ascii').split('&'):
+            if not part:
+                continue
+            name, eq_present, value = part.partition('=')
+            name = dequote(name, encoding=encoding)
+            if eq_present:
+                output.append((name, dequote(value, encoding=encoding)))
+            else:
+                output.append((name, ''))
+
+        return dict(output)
+
+    def _encode(self, datum: typing.Union[bool, None, float, int, str,
+                                          type_info.DefinesIsoFormat],
+                char_map: typing.Mapping[int, str], encoding: str) -> str:
+        if isinstance(datum, str):
+            pass  # optimization: skip additional checks for strings
+        elif (isinstance(datum, (float, int, str, uuid.UUID))
+              and not isinstance(datum, bool)):
+            datum = str(datum)
+        elif (isinstance(datum, collections.abc.Hashable)
+              and datum in self.options.literal_mapping):
+            # the isinstance Hashable check confuses mypy
+            datum = self.options.literal_mapping[datum]  # type: ignore
+        elif isinstance(datum, (bytearray, bytes, memoryview)):
+            return ''.join(char_map[c] for c in datum)
+        elif isinstance(datum, type_info.DefinesIsoFormat):
+            datum = datum.isoformat()
+        else:
+            datum = str(datum)
+
+        return ''.join(char_map[c] for c in datum.encode(encoding))
+
+    def _convert_to_tuple_sequence(
+        self, value: type_info.Serializable
+    ) -> typing.Iterable[typing.Tuple[typing.Any, typing.Any]]:
+        tuples: typing.Iterable[typing.Tuple[typing.Any, typing.Any]]
+        if isinstance(value, collections.abc.Mapping):
+            tuples = value.items()
+        else:
+            try:
+                tuples = [(a, b) for a, b in value]  # type: ignore
+            except (TypeError, ValueError):
+                raise TypeError('Cannot convert value to sequence of tuples')
+
+        if self.options.encode_sequences:
+            out_tuples = []
+            for a, b in tuples:
+                if (not isinstance(b, (bytes, bytearray, memoryview, str))
+                        and isinstance(b, collections.abc.Iterable)):
+                    for value in b:
+                        out_tuples.append((a, value))
+                else:
+                    out_tuples.append((a, b))
+            tuples = out_tuples
+
+        return tuples

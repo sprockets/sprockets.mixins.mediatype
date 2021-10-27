@@ -1,6 +1,7 @@
 import base64
 import datetime
 import json
+import math
 import os
 import pickle
 import struct
@@ -12,7 +13,8 @@ from ietfparse import algorithms
 from tornado import httputil, testing, web
 import umsgpack
 
-from sprockets.mixins.mediatype import content, handlers, transcoders
+from sprockets.mixins.mediatype import (content, handlers, transcoders,
+                                        type_info)
 import examples
 
 
@@ -174,6 +176,35 @@ class SendResponseTests(testing.AsyncHTTPTestCase):
         self.assertEqual(200, response.code)
         self.assertEqual('application/foo+json',
                          response.headers.get('Content-Type'))
+
+    def test_that_transcoder_failures_result_in_500(self):
+        class FailingTranscoder:
+            content_type = 'application/vnd.com.example.bad'
+
+            def __init__(self):
+                self.exc_class = TypeError
+
+            def to_bytes(self, inst_data, encoding=None):
+                raise self.exc_class('I always fail at this')
+
+            def from_bytes(self, data_bytes, encoding=None):
+                return {}
+
+        transcoder = FailingTranscoder()
+        content.add_transcoder(self.application, transcoder)
+        for _ in range(2):
+            response = self.fetch(
+                '/',
+                method='POST',
+                body=b'{}',
+                headers={
+                    'Accept': 'application/vnd.com.example.bad',
+                    'Content-Type': 'application/json',
+                },
+            )
+            self.assertEqual(500, response.code)
+            self.assertEqual('Response Encoding Failure', response.reason)
+            transcoder.exc_class = ValueError
 
 
 class GetRequestBodyTests(testing.AsyncHTTPTestCase):
@@ -520,3 +551,148 @@ class MsgPackTranscoderTests(unittest.TestCase):
                 new_callable=lambda: None):
             with self.assertRaises(RuntimeError):
                 transcoders.MsgPackTranscoder()
+
+
+class FormUrlEncodingTranscoderTests(unittest.TestCase):
+    transcoder: type_info.Transcoder
+
+    def setUp(self):
+        super().setUp()
+        self.transcoder = transcoders.FormUrlEncodedTranscoder()
+
+    def test_simple_deserialization(self):
+        body = self.transcoder.from_bytes(
+            b'number=12&boolean=true&null=null&string=anything%20really&empty='
+        )
+        self.assertEqual(body['number'], '12')
+        self.assertEqual(body['boolean'], 'true')
+        self.assertEqual(body['empty'], '')
+        self.assertEqual(body['null'], 'null')
+        self.assertEqual(body['string'], 'anything really')
+
+    def test_deserialization_edge_cases(self):
+        body = self.transcoder.from_bytes(b'')
+        self.assertEqual({}, body)
+
+        body = self.transcoder.from_bytes(b'&')
+        self.assertEqual({}, body)
+
+        body = self.transcoder.from_bytes(b'empty&&=no-name&no-value=')
+        self.assertEqual({'empty': '', '': 'no-name', 'no-value': ''}, body)
+
+        body = self.transcoder.from_bytes(b'repeated=1&repeated=2')
+        self.assertEqual({'repeated': '2'}, body)
+
+    def test_that_deserialization_encoding_can_be_overridden(self):
+        body = self.transcoder.from_bytes(b'kolor=%bf%F3%b3ty',
+                                          encoding='iso-8859-2')
+        self.assertEqual({'kolor': 'żółty'}, body)
+
+    def test_simple_serialization(self):
+        now = datetime.datetime.now()
+        id_val = uuid.uuid4()
+        content_type, result = self.transcoder.to_bytes({
+            'integer': 12,
+            'float': math.pi,
+            'string': 'percent quoted',
+            'datetime': now,
+            'id': id_val,
+        })
+        self.assertEqual(content_type, 'application/x-www-formurlencoded')
+        self.assertEqual(
+            result.decode(), '&'.join([
+                'integer=12',
+                f'float={math.pi}',
+                'string=percent%20quoted',
+                'datetime=' + now.isoformat().replace(':', '%3A'),
+                f'id={id_val}',
+            ]))
+
+    def test_that_serialization_encoding_can_be_overridden(self):
+        _, result = self.transcoder.to_bytes([('kolor', 'żółty')],
+                                             encoding='iso-8859-2')
+        self.assertEqual(b'kolor=%bf%f3%b3ty', result.lower())
+
+    def test_serialization_edge_cases(self):
+        _, result = self.transcoder.to_bytes([
+            ('', ''),
+            ('', True),
+            ('', False),
+            ('', None),
+            ('name', None),
+        ])
+        self.assertEqual(b'=&=true&=false&&name', result)
+
+    def test_serialization_using_plusses(self):
+        self.transcoder: transcoders.FormUrlEncodedTranscoder
+
+        self.transcoder.options.space_as_plus = True
+        _, result = self.transcoder.to_bytes({'value': 'with space'})
+        self.assertEqual(b'value=with+space', result)
+
+        self.transcoder.options.space_as_plus = False
+        _, result = self.transcoder.to_bytes({'value': 'with space'})
+        self.assertEqual(b'value=with%20space', result)
+
+    def test_that_serializing_unsupported_types_stringifies(self):
+        obj = object()
+        # quick & dirty URL encoding
+        expected = str(obj).translate({0x20: '%20', 0x3C: '%3C', 0x3E: '%3E'})
+
+        _, result = self.transcoder.to_bytes({'unsupported': obj})
+        self.assertEqual(f'unsupported={expected}'.encode(), result)
+
+    def test_that_required_octets_are_encoded(self):
+        # build the set of all characters required to be encoded by
+        # https://url.spec.whatwg.org/#percent-encoded-bytes
+        pct_chrs = typing.cast(typing.Set[str], set())
+        pct_chrs.update({c for c in ' "#<>'})  # query set
+        pct_chrs.update({c for c in '?`{}'})  # path set
+        pct_chrs.update({c for c in '/:;=@[^|'})  # userinfo set
+        pct_chrs.update({c for c in '$%&+,'})  # component set
+        pct_chrs.update({c for c in "!'()~"})  # formurlencoding set
+
+        test_string = ''.join(pct_chrs)
+        expected = ''.join('%{:02X}'.format(ord(c)) for c in test_string)
+        expected = f'test_string={expected}'.encode()
+        _, result = self.transcoder.to_bytes({'test_string': test_string})
+        self.assertEqual(expected, result)
+
+    def test_serialization_of_primitives(self):
+        id_val = uuid.uuid4()
+        expectations = {
+            None: b'',
+            'a string': b'a%20string',
+            10: b'10',
+            2.3: str(2.3).encode(),
+            True: b'true',
+            False: b'false',
+            b'\xfe\xed\xfa\xce': b'%FE%ED%FA%CE',
+            memoryview(b'\xfe\xed\xfa\xce'): b'%FE%ED%FA%CE',
+            id_val: str(id_val).encode(),
+        }
+        for value, expected in expectations.items():
+            _, result = self.transcoder.to_bytes(value)
+            self.assertEqual(expected, result)
+
+    def test_serialization_with_empty_literal_map(self):
+        self.transcoder: transcoders.FormUrlEncodedTranscoder
+        self.transcoder.options.literal_mapping.clear()
+        for value in {None, True, False}:
+            _, result = self.transcoder.to_bytes(value)
+            self.assertEqual(str(value).encode(), result)
+
+    def test_serialization_of_sequences(self):
+        self.transcoder: transcoders.FormUrlEncodedTranscoder
+
+        value = {'list': [1, 2], 'tuple': (1, 2), 'set': {1, 2}, 'str': 'val'}
+
+        self.transcoder.options.encode_sequences = False
+        _, result = self.transcoder.to_bytes(value)
+        self.assertEqual((b'list=%5B1%2C%202%5D&tuple=%281%2C%202%29'
+                          b'&set=%7B1%2C%202%7D&str=val'), result)
+
+        self.transcoder.options.encode_sequences = True
+        _, result = self.transcoder.to_bytes(value)
+        self.assertEqual(b'list=1&list=2&tuple=1&tuple=2&set=1&set=2&str=val',
+                         result)

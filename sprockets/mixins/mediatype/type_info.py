@@ -4,13 +4,14 @@ import typing
 import uuid
 
 try:
-    from typing import Protocol
+    from typing import Protocol, runtime_checkable
 except ImportError:
     # "ignore" is required to avoid an incompatible import
     # error due to different bindings of _SpecialForm
-    from typing_extensions import Protocol  # type: ignore
+    from typing_extensions import Protocol, runtime_checkable  # type: ignore
 
 
+@runtime_checkable
 class DefinesIsoFormat(Protocol):
     """An object that has an isoformat method."""
     def isoformat(self) -> str:
@@ -23,6 +24,10 @@ class HasSettings(Protocol):
     settings: typing.Dict[str, typing.Any]
     """Application settings."""
 
+
+SerializablePrimitives = (type(None), bool, bytearray, bytes, float, int,
+                          memoryview, str, uuid.UUID)
+"""Use this with isinstance to identify simple values."""
 
 Serializable = typing.Union[DefinesIsoFormat, None, bool, bytearray, bytes,
                             float, int, memoryview, str, typing.Mapping,
