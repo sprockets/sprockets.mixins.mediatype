@@ -99,3 +99,6 @@ Contract Types
 
 .. autoclass:: SupportsSettings
    :members:
+
+.. autoclass:: SupportsDataclassFields
+   :members:

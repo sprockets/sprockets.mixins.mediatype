@@ -1,4 +1,5 @@
 import base64
+import dataclasses
 import datetime
 import decimal
 import json
@@ -354,6 +355,17 @@ class JSONTranscoderTests(unittest.TestCase):
         loaded = json.loads(dumped)
         self.assertEqual(loaded['n'], float(pi))
 
+    def test_that_dataclasses_are_handled_as_dicts(self):
+        @dataclasses.dataclass
+        class Point:
+            x: int
+            y: int
+
+        datum = Point(3, 4)
+        dumped = self.transcoder.dumps({'point': datum})
+        expected = json.dumps({'point': dataclasses.asdict(datum)})
+        self.assertDictEqual(json.loads(expected), json.loads(dumped))
+
 
 class ContentSettingsTests(unittest.TestCase):
     def test_that_handler_listed_in_available_content_types(self):
@@ -566,6 +578,26 @@ class MsgPackTranscoderTests(unittest.TestCase):
         self.assertEqual(0xcb, dumped[0])
         self.assertEqual(struct.pack('>d', float(pi)), dumped[1:])
 
+    def test_that_dataclasses_are_handled_as_dicts(self):
+        @dataclasses.dataclass
+        class Point:
+            x: int
+            y: int
+
+        datum = typing.cast(type_info.SupportsDataclassFields, Point(3, 4))
+        dumped = self.transcoder.packb(datum)
+        expected = struct.pack(
+            'BBBBBBB',
+            0x82,  # mapping of two fields
+            0xA1,  # string of a single byte
+            ord('x'),
+            3,  # positive integer less than 128
+            0xA1,  # string of a single byte
+            ord('y'),
+            4,  # positive integer less than 128
+        )
+        self.assertEqual(expected, dumped)
+
 
 class FormUrlEncodingTranscoderTests(unittest.TestCase):
     transcoder: type_info.Transcoder
@@ -715,3 +747,13 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         pi = decimal.Decimal('3.142857142857142857142857143')
         _, result = self.transcoder.to_bytes({'pi': pi})
         self.assertEqual('pi={}'.format(str(pi)).encode(), result)
+
+    def test_that_dataclasses_are_handled_as_dicts(self):
+        @dataclasses.dataclass
+        class Point:
+            x: int
+            y: int
+
+        datum = typing.cast(type_info.SupportsDataclassFields, Point(3, 4))
+        _, result = self.transcoder.to_bytes(datum)
+        self.assertEqual(b'x=3&y=4', result)

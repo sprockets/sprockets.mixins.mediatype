@@ -115,6 +115,8 @@ class JSONTranscoder(handlers.TextContentHandler):
         +----------------------------+---------------------------------------+
         | :class:`decimal.Decimal`   | Same as ``float(value)``              |
         +----------------------------+---------------------------------------+
+        | Dataclasses                | Same as :func:`dataclasses.asdict`    |
+        +----------------------------+---------------------------------------+
 
         """
         if isinstance(obj, uuid.UUID):
@@ -125,6 +127,8 @@ class JSONTranscoder(handlers.TextContentHandler):
             return base64.b64encode(obj).decode('ASCII')
         if isinstance(obj, decimal.Decimal):
             return float(obj)
+        if dataclasses.is_dataclass(obj):
+            return dataclasses.asdict(obj)
         raise TypeError('{!r} is not JSON serializable'.format(obj))
 
 
@@ -204,6 +208,9 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-----------------------------------+-------------------------------+
         | :class:`decimal.Decimal`          | `float family`_               |
         +-----------------------------------+-------------------------------+
+        | Dataclasses                       | `map family`_ after calling   |
+        |                                   | :func:`dataclasses.asdict`    |
+        +-----------------------------------+-------------------------------+
 
         .. _nil byte: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
@@ -252,6 +259,9 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
 
         if isinstance(datum, (collections.abc.Sequence, collections.abc.Set)):
             return [self.normalize_datum(item) for item in datum]
+
+        if dataclasses.is_dataclass(datum):
+            datum = dataclasses.asdict(datum)
 
         if isinstance(datum, collections.abc.Mapping):
             out = {}
@@ -318,6 +328,9 @@ class FormUrlEncodedTranscoder:
     +----------------------------+---------------------------------------+
     | :class:`datetime.datetime` | result of calling                     |
     |                            | :meth:`~datetime.datetime.isoformat`  |
+    +----------------------------+---------------------------------------+
+    | Dataclasses                | same as calling                       |
+    |                            | :func:`dataclasses.asdict` on value   |
     +----------------------------+---------------------------------------+
 
     https://url.spec.whatwg.org/#application/x-www-form-urlencoded
@@ -465,6 +478,9 @@ class FormUrlEncodedTranscoder:
         self, value: type_info.Serializable
     ) -> typing.Iterable[typing.Tuple[typing.Any, typing.Any]]:
         tuples: typing.Iterable[typing.Tuple[typing.Any, typing.Any]]
+        if dataclasses.is_dataclass(value):
+            value = dataclasses.asdict(value)
+
         if isinstance(value, collections.abc.Mapping):
             tuples = value.items()
         else:

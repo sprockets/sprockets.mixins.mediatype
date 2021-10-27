@@ -13,6 +13,17 @@ except ImportError:
 
 
 @runtime_checkable
+class SupportsDataclassFields(Protocol):
+    """An object that looks like a dataclass.
+
+    The implementation uses the same test that :func:`dataclasses.is_dataclass`
+    uses in Python 3.9.
+
+    """
+    __dataclass_fields__: typing.ClassVar[typing.Mapping[str, typing.Any]]
+
+
+@runtime_checkable
 class SupportsIsoFormat(Protocol):
     """An object that has an isoformat method."""
     def isoformat(self) -> str:
@@ -29,7 +40,7 @@ class SupportsSettings(Protocol):
 Serializable = typing.Union[SupportsIsoFormat, None, bool, bytearray, bytes,
                             float, int, memoryview, str, typing.Mapping,
                             typing.Sequence, typing.Set, uuid.UUID,
-                            decimal.Decimal]
+                            decimal.Decimal, SupportsDataclassFields]
 """Types that can be serialized by this library.
 
 This is the set of types that
