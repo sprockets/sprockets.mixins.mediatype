@@ -11,6 +11,7 @@ from __future__ import annotations
 import base64
 import dataclasses
 import decimal
+import ipaddress
 import json
 import string
 import typing
@@ -99,24 +100,27 @@ class JSONTranscoder(handlers.TextContentHandler):
         to :func:`json.dumps`.  It provides default representations for
         a number of Python language/standard library types.
 
-        +----------------------------+---------------------------------------+
-        | Python Type                | String Format                         |
-        +----------------------------+---------------------------------------+
-        | :class:`bytes`,            | Base64 encoded string.                |
-        | :class:`bytearray`,        |                                       |
-        | :class:`memoryview`        |                                       |
-        +----------------------------+---------------------------------------+
-        | :class:`datetime.datetime` | ISO8601 formatted timestamp in the    |
-        |                            | extended format including separators, |
-        |                            | milliseconds, and the timezone        |
-        |                            | designator.                           |
-        +----------------------------+---------------------------------------+
-        | :class:`uuid.UUID`         | Same as ``str(value)``                |
-        +----------------------------+---------------------------------------+
-        | :class:`decimal.Decimal`   | Same as ``float(value)``              |
-        +----------------------------+---------------------------------------+
-        | Dataclasses                | Same as :func:`dataclasses.asdict`    |
-        +----------------------------+---------------------------------------+
+        +--------------------------------+------------------------------------+
+        | Python Type                    | String Format                      |
+        +--------------------------------+------------------------------------+
+        | :class:`bytes`,                | Base64 encoded string.             |
+        | :class:`bytearray`,            |                                    |
+        | :class:`memoryview`            |                                    |
+        +--------------------------------+------------------------------------+
+        | :class:`datetime.datetime`     | ISO8601 formatted timestamp in the |
+        |                                | extended format including          |
+        |                                | separators, milliseconds, and the  |
+        |                                | timezone designator.               |
+        +--------------------------------+------------------------------------+
+        | :class:`uuid.UUID`             | Same as ``str(value)``             |
+        +--------------------------------+------------------------------------+
+        | :class:`decimal.Decimal`       | Same as ``float(value)``           |
+        +--------------------------------+------------------------------------+
+        | Dataclasses                    | Same as :func:`dataclasses.asdict` |
+        +--------------------------------+------------------------------------+
+        | :class:`ipaddress.IPv4Address` | Same as ``str(value.exploded)``    |
+        | :class:`ipaddress.IPv6Address` |                                    |
+        +--------------------------------+------------------------------------+
 
         """
         if isinstance(obj, uuid.UUID):
@@ -125,6 +129,8 @@ class JSONTranscoder(handlers.TextContentHandler):
             return typing.cast(type_info.SupportsIsoFormat, obj).isoformat()
         if isinstance(obj, (bytes, bytearray, memoryview)):
             return base64.b64encode(obj).decode('ASCII')
+        if isinstance(obj, (ipaddress.IPv4Address, ipaddress.IPv6Address)):
+            return obj.exploded
         if isinstance(obj, decimal.Decimal):
             return float(obj)
         if dataclasses.is_dataclass(obj):
@@ -208,6 +214,9 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-----------------------------------+-------------------------------+
         | :class:`decimal.Decimal`          | `float family`_               |
         +-----------------------------------+-------------------------------+
+        | :class:`ipaddress.IPv4Address`    | `str family`_ of the exploded |
+        | :class:`ipaddress.IPv6Address`    | address form                  |
+        +-----------------------------------+-------------------------------+
         | Dataclasses                       | `map family`_ after calling   |
         |                                   | :func:`dataclasses.asdict`    |
         +-----------------------------------+-------------------------------+
@@ -253,6 +262,9 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
 
         if hasattr(datum, 'isoformat'):
             datum = typing.cast(type_info.SupportsIsoFormat, datum).isoformat()
+
+        if isinstance(datum, (ipaddress.IPv4Address, ipaddress.IPv6Address)):
+            datum = datum.exploded
 
         if isinstance(datum, (bytes, str)):
             return datum
@@ -305,33 +317,35 @@ class FormUrlEncodedTranscoder:
     sequences of pairs and encodes both the name and value.  The
     following table describes how each supported type is encoded.
 
-    +----------------------------+---------------------------------------+
-    | Value / Type               | Encoding                              |
-    +============================+=======================================+
-    | character strings          | UTF-8 codepoints before percent-      |
-    |                            | encoding the resulting bytes          |
-    +----------------------------+---------------------------------------+
-    | space character            | ``%20`` or ``+``                      |
-    +----------------------------+---------------------------------------+
-    | :data:`False`              | ``false``                             |
-    +----------------------------+---------------------------------------+
-    | :data:`True`               | ``true``                              |
-    +----------------------------+---------------------------------------+
-    | :data:`None`               | the empty string                      |
-    +----------------------------+---------------------------------------+
-    | numbers including          | ``str(n)``                            |
-    | :class:`decimal.Decimal`   |                                       |
-    +----------------------------+---------------------------------------+
-    | byte sequences             | percent-encoded bytes                 |
-    +----------------------------+---------------------------------------+
-    | :class:`uuid.UUID`         | ``str(u)``                            |
-    +----------------------------+---------------------------------------+
-    | :class:`datetime.datetime` | result of calling                     |
-    |                            | :meth:`~datetime.datetime.isoformat`  |
-    +----------------------------+---------------------------------------+
-    | Dataclasses                | same as calling                       |
-    |                            | :func:`dataclasses.asdict` on value   |
-    +----------------------------+---------------------------------------+
+    +--------------------------------+---------------------------------------+
+    | Value / Type                   | Encoding                              |
+    +================================+=======================================+
+    | character strings              | UTF-8 codepoints before percent-      |
+    |                                | encoding the resulting bytes          |
+    +--------------------------------+---------------------------------------+
+    | space character                | ``%20`` or ``+``                      |
+    +--------------------------------+---------------------------------------+
+    | :data:`False`                  | ``false``                             |
+    +--------------------------------+---------------------------------------+
+    | :data:`True`                   | ``true``                              |
+    +--------------------------------+---------------------------------------+
+    | :data:`None`                   | the empty string                      |
+    +--------------------------------+---------------------------------------+
+    | numbers                        | ``str(n)``                            |
+    +--------------------------------+---------------------------------------+
+    | byte sequences                 | percent-encoded bytes                 |
+    +--------------------------------+---------------------------------------+
+    | :class:`uuid.UUID`             | ``str(u)``                            |
+    +--------------------------------+---------------------------------------+
+    | :class:`datetime.datetime`     | result of calling                     |
+    |                                | :meth:`~datetime.datetime.isoformat`  |
+    +--------------------------------+---------------------------------------+
+    | Dataclasses                    | same as calling                       |
+    |                                | :func:`dataclasses.asdict` on value   |
+    +--------------------------------+---------------------------------------+
+    | :class:`ipaddress.IPv4Address` | ``str(v.exploded)``                   |
+    | :class:`ipaddress.IPv6Address` |                                       |
+    +--------------------------------+---------------------------------------+
 
     https://url.spec.whatwg.org/#application/x-www-form-urlencoded
 
@@ -461,6 +475,8 @@ class FormUrlEncodedTranscoder:
         elif (isinstance(datum, (float, int, str, uuid.UUID))
               and not isinstance(datum, bool)):
             datum = str(datum)
+        elif isinstance(datum, (ipaddress.IPv4Address, ipaddress.IPv6Address)):
+            datum = datum.exploded
         elif (isinstance(datum, collections.abc.Hashable)
               and datum in self.options.literal_mapping):
             # the isinstance Hashable check confuses mypy

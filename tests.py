@@ -2,6 +2,7 @@ import base64
 import dataclasses
 import datetime
 import decimal
+import ipaddress
 import json
 import math
 import os
@@ -366,6 +367,12 @@ class JSONTranscoderTests(unittest.TestCase):
         expected = json.dumps({'point': dataclasses.asdict(datum)})
         self.assertDictEqual(json.loads(expected), json.loads(dumped))
 
+    def test_that_ip_addresses_are_supported(self):
+        for addr in {'10.0.0.0', '::1'}:
+            datum = ipaddress.ip_address(addr)
+            dumped = self.transcoder.dumps({'addr': datum})
+            self.assertEqual(dumped, '{"addr":"%s"}' % (datum.exploded, ))
+
 
 class ContentSettingsTests(unittest.TestCase):
     def test_that_handler_listed_in_available_content_types(self):
@@ -598,6 +605,12 @@ class MsgPackTranscoderTests(unittest.TestCase):
         )
         self.assertEqual(expected, dumped)
 
+    def test_that_ip_addresses_are_supported(self):
+        for addr in {'10.0.0.0', '::1'}:
+            datum = ipaddress.ip_address(addr)
+            dumped = self.transcoder.packb(datum)
+            self.assertEqual(pack_string(datum.exploded), dumped)
+
 
 class FormUrlEncodingTranscoderTests(unittest.TestCase):
     transcoder: type_info.Transcoder
@@ -757,3 +770,10 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         datum = typing.cast(type_info.SupportsDataclassFields, Point(3, 4))
         _, result = self.transcoder.to_bytes(datum)
         self.assertEqual(b'x=3&y=4', result)
+
+    def test_that_ip_addresses_are_supported(self):
+        for addr in {'10.0.0.0', '::1'}:
+            datum = ipaddress.ip_address(addr)
+            _, result = self.transcoder.to_bytes({'addr': datum})
+            self.assertEqual(
+                f'addr={datum.exploded}'.replace(':', '%3A').encode(), result)
