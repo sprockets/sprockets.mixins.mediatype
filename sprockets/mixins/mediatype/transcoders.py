@@ -88,7 +88,7 @@ class JSONTranscoder(handlers.TextContentHandler):
                            json.loads(str_repr, **self.load_options))
 
     def dump_object(self,
-                    obj: type_info.Serializable) -> typing.Union[str, float]:
+                    obj: type_info.Serializable) -> type_info.JsonDumpable:
         """
         Called to encode unrecognized object.
 

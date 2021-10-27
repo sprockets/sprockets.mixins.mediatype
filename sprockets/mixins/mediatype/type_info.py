@@ -77,6 +77,10 @@ MsgPackable = typing.Union[None, bool, bytes, typing.Dict[typing.Any,
                            int, typing.List[typing.Any], str]
 """Set of types that the underlying msgpack library can serialize."""
 
+JsonDumpable = typing.Union[None, bool, typing.Mapping[typing.Any, typing.Any],
+                            float, int, typing.Sequence[typing.Any], str, None]
+"""Set of types that the underlying msgpack library can serialize."""
+
 
 class Transcoder(Protocol):
     """Object that transforms objects to bytes and back again.
