@@ -27,8 +27,6 @@ adds content handling methods to :class:`~tornado.web.RequestHandler`
 instances.
 
 """
-from __future__ import annotations
-
 import logging
 import typing
 import warnings

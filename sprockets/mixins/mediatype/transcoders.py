@@ -6,8 +6,6 @@ Bundled media type transcoders.
 - :class:`.FormUrlEncodedTranscoder` implements the venerable form encoding
 
 """
-from __future__ import annotations
-
 import base64
 import dataclasses
 import decimal
@@ -294,12 +292,13 @@ class FormUrlEncodingOptions:
     encode_sequences: bool = False
     """Encode sequence values as multiple name=value instances."""
 
-    literal_mapping: dict[typing.Literal[None, True, False],
-                          str] = dataclasses.field(default_factory=lambda: {
-                              None: '',
-                              True: 'true',
-                              False: 'false'
-                          })
+    literal_mapping: typing.Dict[typing.Union[None, bool],
+                                 str] = dataclasses.field(
+                                     default_factory=lambda: {
+                                         None: '',
+                                         True: 'true',
+                                         False: 'false'
+                                     })
     """Mapping from supported literal values to strings."""
 
     space_as_plus: bool = False

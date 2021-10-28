@@ -7,8 +7,6 @@ Basic content handlers.
   to text before calling functions that encode & decode text
 
 """
-from __future__ import annotations
-
 import typing
 
 from tornado import escape
