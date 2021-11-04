@@ -11,6 +11,7 @@ import dataclasses
 import decimal
 import ipaddress
 import json
+import pathlib
 import string
 import typing
 import urllib.parse
@@ -119,9 +120,11 @@ class JSONTranscoder(handlers.TextContentHandler):
         | :class:`ipaddress.IPv4Address` | Same as ``str(value.exploded)``    |
         | :class:`ipaddress.IPv6Address` |                                    |
         +--------------------------------+------------------------------------+
+        | :class:`pathlib.Path`          | Same as ``str(value)``             |
+        +--------------------------------+------------------------------------+
 
         """
-        if isinstance(obj, uuid.UUID):
+        if isinstance(obj, (pathlib.Path, uuid.UUID)):
             return str(obj)
         if hasattr(obj, 'isoformat'):
             return typing.cast(type_info.SupportsIsoFormat, obj).isoformat()
@@ -218,6 +221,8 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         | Dataclasses                       | `map family`_ after calling   |
         |                                   | :func:`dataclasses.asdict`    |
         +-----------------------------------+-------------------------------+
+        | :class:`pathlib.Path`             | Same as ``str(value)``        |
+        +-----------------------------------+-------------------------------+
 
         .. _nil byte: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
@@ -249,7 +254,7 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         if isinstance(datum, self.PACKABLE_TYPES):
             return datum
 
-        if isinstance(datum, uuid.UUID):
+        if isinstance(datum, (pathlib.Path, uuid.UUID)):
             datum = str(datum)
 
         if isinstance(datum, bytearray):
@@ -344,6 +349,8 @@ class FormUrlEncodedTranscoder:
     +--------------------------------+---------------------------------------+
     | :class:`ipaddress.IPv4Address` | ``str(v.exploded)``                   |
     | :class:`ipaddress.IPv6Address` |                                       |
+    +--------------------------------+---------------------------------------+
+    | :class:`pathlib.Path`          | Same as ``str(value)``                |
     +--------------------------------+---------------------------------------+
 
     https://url.spec.whatwg.org/#application/x-www-form-urlencoded

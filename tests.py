@@ -6,6 +6,7 @@ import ipaddress
 import json
 import math
 import os
+import pathlib
 import pickle
 import struct
 import typing
@@ -373,6 +374,11 @@ class JSONTranscoderTests(unittest.TestCase):
             dumped = self.transcoder.dumps({'addr': datum})
             self.assertEqual(dumped, '{"addr":"%s"}' % (datum.exploded, ))
 
+    def test_that_paths_are_supported(self):
+        p = pathlib.Path(__file__)
+        dumped = self.transcoder.dumps({'path': p})
+        self.assertEqual(dumped, '{"path":"%s"}' % (p, ))
+
 
 class ContentSettingsTests(unittest.TestCase):
     def test_that_handler_listed_in_available_content_types(self):
@@ -611,6 +617,11 @@ class MsgPackTranscoderTests(unittest.TestCase):
             dumped = self.transcoder.packb(datum)
             self.assertEqual(pack_string(datum.exploded), dumped)
 
+    def test_that_paths_are_supported(self):
+        p = pathlib.Path(__file__)
+        dumped = self.transcoder.packb(p)
+        self.assertEqual(pack_string(str(p)), dumped)
+
 
 class FormUrlEncodingTranscoderTests(unittest.TestCase):
     transcoder: type_info.Transcoder
@@ -777,3 +788,8 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
             _, result = self.transcoder.to_bytes({'addr': datum})
             self.assertEqual(
                 f'addr={datum.exploded}'.replace(':', '%3A').encode(), result)
+
+    def test_that_paths_are_supported(self):
+        p = pathlib.Path(__file__)
+        _, result = self.transcoder.to_bytes({'path': p})
+        self.assertEqual(f'path={str(p)}'.replace('/', '%2F').encode(), result)

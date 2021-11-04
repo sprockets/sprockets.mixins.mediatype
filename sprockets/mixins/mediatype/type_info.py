@@ -1,5 +1,6 @@
 import decimal
 import ipaddress
+import pathlib
 import typing
 import uuid
 
@@ -40,7 +41,8 @@ Serializable = typing.Union[SupportsIsoFormat, None, bool, bytearray, bytes,
                             float, int, memoryview, str, typing.Mapping,
                             typing.Sequence, typing.Set, uuid.UUID,
                             decimal.Decimal, SupportsDataclassFields,
-                            ipaddress.IPv4Address, ipaddress.IPv6Address]
+                            ipaddress.IPv4Address, ipaddress.IPv6Address,
+                            pathlib.Path]
 """Types that can be serialized by this library.
 
 This is the set of types that

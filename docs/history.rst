@@ -7,6 +7,7 @@ Version History
 - Add support for encoding :class:`decimal.Decimal`
 - Add support for encoding :func:`dataclasses.dataclass` decorated classes
 - Add support for encoding :class:`ipaddress.IPv4Address` and :class:`ipaddress.IPv6Address`
+- Add support for encoding :class:`pathlib.Path`
 - Add type annotations (see :ref:`type-info`)
 - Return a "406 Not Acceptable" if the :http:header:`Accept` header values cannot be matched
   and there is no default content type configured
