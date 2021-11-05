@@ -1,5 +1,6 @@
 import array
 import base64
+import collections
 import dataclasses
 import datetime
 import decimal
@@ -403,6 +404,13 @@ class JSONTranscoderTests(unittest.TestCase):
         self.assertEqual(dumped,
                          '{"array":[%s]}' % (','.join(str(x) for x in a), ))
 
+    def test_that_namedtuples_are_handled_as_tuples(self):
+        Point = collections.namedtuple('Point', ['x', 'y'])
+        datum = Point(3, 4)
+        dumped = self.transcoder.dumps({'point': datum})
+        expected = json.dumps({'point': [x for x in datum]})
+        self.assertDictEqual(json.loads(expected), json.loads(dumped))
+
 
 class ContentSettingsTests(unittest.TestCase):
     def test_that_handler_listed_in_available_content_types(self):
@@ -667,6 +675,12 @@ class MsgPackTranscoderTests(unittest.TestCase):
             expected += pack_string(ch)
         self.assertEqual(expected, self.transcoder.packb(a))
 
+    def test_that_namedtuples_are_handled_as_tuples(self):
+        Point = collections.namedtuple('Point', ['x', 'y'])
+        datum = Point(3, 4)
+        expected = struct.pack('>BBB', 0x90 | 2, 3, 4)
+        self.assertEqual(expected, self.transcoder.packb(datum))
+
 
 class FormUrlEncodingTranscoderTests(unittest.TestCase):
     transcoder: type_info.Transcoder
@@ -850,4 +864,11 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         self.transcoder.options.encode_sequences = True
         _, expected = self.transcoder.to_bytes({'array': a.tolist()})
         _, result = self.transcoder.to_bytes({'array': a})
+        self.assertEqual(expected, result)
+
+    def test_that_namedtuples_are_handled_as_tuples(self):
+        Point = collections.namedtuple('Point', ['x', 'y'])
+        datum = Point(3, 4)
+        _, expected = self.transcoder.to_bytes({'point': (3, 4)})
+        _, result = self.transcoder.to_bytes({'point': datum})
         self.assertEqual(expected, result)

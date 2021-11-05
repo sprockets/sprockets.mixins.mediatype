@@ -506,6 +506,9 @@ class FormUrlEncodedTranscoder:
             return ''.join(char_map[c] for c in datum)
         elif isinstance(datum, type_info.SupportsIsoFormat):
             str_repr = datum.isoformat()
+        # the following check is for namedtuples
+        elif isinstance(datum, tuple) and datum.__class__ is not tuple:
+            str_repr = str(tuple(datum))
         else:
             str_repr = str(datum)
 
