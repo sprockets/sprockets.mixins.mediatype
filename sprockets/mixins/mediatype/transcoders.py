@@ -6,6 +6,9 @@ Bundled media type transcoders.
 - :class:`.FormUrlEncodedTranscoder` implements the venerable form encoding
 
 """
+from __future__ import annotations
+
+import array
 import base64
 import dataclasses
 import decimal
@@ -122,6 +125,8 @@ class JSONTranscoder(handlers.TextContentHandler):
         +--------------------------------+------------------------------------+
         | :class:`pathlib.Path`          | Same as ``str(value)``             |
         +--------------------------------+------------------------------------+
+        | :class:`array.array`           | Same as :meth:`array.array.tolist` |
+        +--------------------------------+------------------------------------+
 
         """
         if isinstance(obj, (pathlib.Path, uuid.UUID)):
@@ -136,6 +141,8 @@ class JSONTranscoder(handlers.TextContentHandler):
             return float(obj)
         if dataclasses.is_dataclass(obj):
             return dataclasses.asdict(obj)
+        if isinstance(obj, array.array):
+            return obj.tolist()
         raise TypeError('{!r} is not JSON serializable'.format(obj))
 
 
@@ -223,6 +230,8 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         +-----------------------------------+-------------------------------+
         | :class:`pathlib.Path`             | Same as ``str(value)``        |
         +-----------------------------------+-------------------------------+
+        | :class:`array.array`              | `array family`_               |
+        +-----------------------------------+-------------------------------+
 
         .. _nil byte: https://github.com/msgpack/msgpack/blob/
            0b8f5ac67cdd130f4d4d4fe6afb839b989fdb86a/spec.md#formats-nil
@@ -272,9 +281,6 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
         if isinstance(datum, (bytes, str)):
             return datum
 
-        if isinstance(datum, (collections.abc.Sequence, collections.abc.Set)):
-            return [self.normalize_datum(item) for item in datum]
-
         if dataclasses.is_dataclass(datum):
             datum = dataclasses.asdict(datum)
 
@@ -283,6 +289,9 @@ class MsgPackTranscoder(handlers.BinaryContentHandler):
             for k, v in datum.items():
                 out[k] = self.normalize_datum(v)
             return out
+
+        if isinstance(datum, (collections.abc.Iterable, collections.abc.Set)):
+            return [self.normalize_datum(item) for item in datum]
 
         raise TypeError('{} is not msgpackable'.format(
             datum.__class__.__name__))
@@ -351,6 +360,9 @@ class FormUrlEncodedTranscoder:
     | :class:`ipaddress.IPv6Address` |                                       |
     +--------------------------------+---------------------------------------+
     | :class:`pathlib.Path`          | Same as ``str(value)``                |
+    +--------------------------------+---------------------------------------+
+    | :class:`array.array`           | Same as encoding                      |
+    |                                | :meth:`array.array.tolist`            |
     +--------------------------------+---------------------------------------+
 
     https://url.spec.whatwg.org/#application/x-www-form-urlencoded
@@ -474,27 +486,30 @@ class FormUrlEncodedTranscoder:
         return dict(output)
 
     def _encode(self, datum: typing.Union[bool, None, float, int, str,
-                                          type_info.SupportsIsoFormat],
+                                          type_info.SupportsIsoFormat,
+                                          array.array[typing.Any]],
                 char_map: typing.Mapping[int, str], encoding: str) -> str:
         if isinstance(datum, str):
-            pass  # optimization: skip additional checks for strings
+            str_repr = datum
         elif (isinstance(datum, (float, int, str, uuid.UUID))
               and not isinstance(datum, bool)):
-            datum = str(datum)
+            str_repr = str(datum)
         elif isinstance(datum, (ipaddress.IPv4Address, ipaddress.IPv6Address)):
-            datum = datum.exploded
+            str_repr = datum.exploded
+        elif isinstance(datum, array.array):
+            str_repr = str(datum.tolist())
         elif (isinstance(datum, collections.abc.Hashable)
               and datum in self.options.literal_mapping):
             # the isinstance Hashable check confuses mypy
-            datum = self.options.literal_mapping[datum]  # type: ignore
+            str_repr = self.options.literal_mapping[datum]  # type: ignore
         elif isinstance(datum, (bytearray, bytes, memoryview)):
             return ''.join(char_map[c] for c in datum)
         elif isinstance(datum, type_info.SupportsIsoFormat):
-            datum = datum.isoformat()
+            str_repr = datum.isoformat()
         else:
-            datum = str(datum)
+            str_repr = str(datum)
 
-        return ''.join(char_map[c] for c in datum.encode(encoding))
+        return ''.join(char_map[c] for c in str_repr.encode(encoding))
 
     def _convert_to_tuple_sequence(
         self, value: type_info.Serializable

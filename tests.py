@@ -1,3 +1,4 @@
+import array
 import base64
 import dataclasses
 import datetime
@@ -41,7 +42,7 @@ class Context:
         self.settings = {}
 
 
-def pack_string(obj):
+def pack_string(obj) -> bytes:
     """Optimally pack a string according to msgpack format"""
     payload = str(obj).encode('ASCII')
     pl = len(payload)
@@ -66,6 +67,22 @@ def pack_bytes(payload):
     else:
         prefix = struct.pack('>BI', 0xC6, pl)
     return prefix + payload
+
+
+def pack_integer(payload):
+    if payload >= 0:
+        nbits = payload.bit_length()
+        codes = [
+            (7, b'', '>0sB'),  # special case of no typecode
+            (8, 0xCC, 'BB'),
+            (16, 0xCD, '>BH'),
+            (32, 0xCE, '>BL'),
+            (64, 0xCF, '>BQ'),
+        ]
+        for max_bits, typecode, fmt_str in codes:
+            if nbits <= max_bits:
+                return struct.pack(fmt_str, typecode, payload)
+    raise RuntimeError(f'pack_integer cannot pack {payload!r}')
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
@@ -379,6 +396,13 @@ class JSONTranscoderTests(unittest.TestCase):
         dumped = self.transcoder.dumps({'path': p})
         self.assertEqual(dumped, '{"path":"%s"}' % (p, ))
 
+    def test_that_array_is_supported(self):
+        a = array.array('B')
+        a.extend(range(255))
+        dumped = self.transcoder.dumps({'array': a})
+        self.assertEqual(dumped,
+                         '{"array":[%s]}' % (','.join(str(x) for x in a), ))
+
 
 class ContentSettingsTests(unittest.TestCase):
     def test_that_handler_listed_in_available_content_types(self):
@@ -622,6 +646,27 @@ class MsgPackTranscoderTests(unittest.TestCase):
         dumped = self.transcoder.packb(p)
         self.assertEqual(pack_string(str(p)), dumped)
 
+    def test_that_array_is_packed_as_array(self):
+        a = array.array('B')
+        a.extend(range(255))
+        expected = struct.pack(
+            '>BH',
+            0xDC,  # array of between 16 & (2^16)-1 elements
+            len(a),
+        )
+        expected += b''.join(pack_integer(elm) for elm in a)
+        self.assertEqual(expected, self.transcoder.packb(a))
+
+        # msgpack handling for an array of Unicode characters
+        # is to pack them as a list of strings instead of a
+        # list of integers
+        data = 'hi there'
+        a = array.array('u', data)
+        expected = bytes([0x90 | len(data)])
+        for ch in data:
+            expected += pack_string(ch)
+        self.assertEqual(expected, self.transcoder.packb(a))
+
 
 class FormUrlEncodingTranscoderTests(unittest.TestCase):
     transcoder: type_info.Transcoder
@@ -793,3 +838,16 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         p = pathlib.Path(__file__)
         _, result = self.transcoder.to_bytes({'path': p})
         self.assertEqual(f'path={str(p)}'.replace('/', '%2F').encode(), result)
+
+    def test_that_arrays_are_supported(self):
+        self.transcoder: transcoders.FormUrlEncodedTranscoder
+
+        a = array.array('B', os.urandom(128))
+        _, expected = self.transcoder.to_bytes({'array': a.tolist()})
+        _, result = self.transcoder.to_bytes({'array': a})
+        self.assertEqual(expected, result)
+
+        self.transcoder.options.encode_sequences = True
+        _, expected = self.transcoder.to_bytes({'array': a.tolist()})
+        _, result = self.transcoder.to_bytes({'array': a})
+        self.assertEqual(expected, result)

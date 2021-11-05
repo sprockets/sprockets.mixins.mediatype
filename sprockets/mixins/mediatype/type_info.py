@@ -1,3 +1,4 @@
+import array
 import decimal
 import ipaddress
 import pathlib
@@ -42,7 +43,7 @@ Serializable = typing.Union[SupportsIsoFormat, None, bool, bytearray, bytes,
                             typing.Sequence, typing.Set, uuid.UUID,
                             decimal.Decimal, SupportsDataclassFields,
                             ipaddress.IPv4Address, ipaddress.IPv6Address,
-                            pathlib.Path]
+                            pathlib.Path, array.array]
 """Types that can be serialized by this library.
 
 This is the set of types that
