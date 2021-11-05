@@ -17,6 +17,7 @@ Version History
 - Fail gracefully when a transcoder does not exist for the default content type
 - Fail gracefully when a transcoder raises a :exc:`TypeError` or :exc:`ValueError` when encoding
   the response
+- Advertise support for Python 3.10
 
 .. _application/x-www-formurlencoded: https://url.spec.whatwg.org/#application/x-www-form-urlencoded
 
