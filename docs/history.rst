@@ -4,6 +4,12 @@ Version History
 :compare:`Next <3.0.4...master>`
 --------------------------------
 - Add a transcoder for `application/x-www-formurlencoded`_
+- Add support for encoding :class:`decimal.Decimal`
+- Add support for encoding :func:`dataclasses.dataclass` decorated classes
+- Add support for encoding :class:`ipaddress.IPv4Address` and :class:`ipaddress.IPv6Address`
+- Add support for encoding :class:`pathlib.Path`
+- Add support for encoding :class:`array.array`
+- Add support for encoding :class:`collections.namedtuple` instances as tuples
 - Add type annotations (see :ref:`type-info`)
 - Return a "406 Not Acceptable" if the :http:header:`Accept` header values cannot be matched
   and there is no default content type configured
@@ -11,6 +17,7 @@ Version History
 - Fail gracefully when a transcoder does not exist for the default content type
 - Fail gracefully when a transcoder raises a :exc:`TypeError` or :exc:`ValueError` when encoding
   the response
+- Advertise support for Python 3.10
 
 .. _application/x-www-formurlencoded: https://url.spec.whatwg.org/#application/x-www-form-urlencoded
 

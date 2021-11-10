@@ -1,5 +1,7 @@
-from __future__ import annotations
-
+import array
+import decimal
+import ipaddress
+import pathlib
 import typing
 import uuid
 
@@ -12,26 +14,36 @@ except ImportError:
 
 
 @runtime_checkable
-class DefinesIsoFormat(Protocol):
+class SupportsDataclassFields(Protocol):
+    """An object that looks like a dataclass.
+
+    The implementation uses the same test that :func:`dataclasses.is_dataclass`
+    uses in Python 3.9.
+
+    """
+    __dataclass_fields__: typing.ClassVar[typing.Mapping[str, typing.Any]]
+
+
+@runtime_checkable
+class SupportsIsoFormat(Protocol):
     """An object that has an isoformat method."""
     def isoformat(self) -> str:
         """Return the date/time in ISO-8601 format."""
         ...
 
 
-class HasSettings(Protocol):
+class SupportsSettings(Protocol):
     """Something that quacks like a tornado.web.Application."""
     settings: typing.Dict[str, typing.Any]
     """Application settings."""
 
 
-SerializablePrimitives = (type(None), bool, bytearray, bytes, float, int,
-                          memoryview, str, uuid.UUID)
-"""Use this with isinstance to identify simple values."""
-
-Serializable = typing.Union[DefinesIsoFormat, None, bool, bytearray, bytes,
+Serializable = typing.Union[SupportsIsoFormat, None, bool, bytearray, bytes,
                             float, int, memoryview, str, typing.Mapping,
-                            typing.Sequence, typing.Set, uuid.UUID]
+                            typing.Sequence, typing.Set, uuid.UUID,
+                            decimal.Decimal, SupportsDataclassFields,
+                            ipaddress.IPv4Address, ipaddress.IPv6Address,
+                            pathlib.Path, array.array]
 """Types that can be serialized by this library.
 
 This is the set of types that
@@ -64,6 +76,10 @@ LoadSFunction = typing.Callable[[str], Deserialized]
 MsgPackable = typing.Union[None, bool, bytes, typing.Dict[typing.Any,
                                                           typing.Any], float,
                            int, typing.List[typing.Any], str]
+"""Set of types that the underlying msgpack library can serialize."""
+
+JsonDumpable = typing.Union[None, bool, typing.Mapping[typing.Any, typing.Any],
+                            float, int, typing.Sequence[typing.Any], str, None]
 """Set of types that the underlying msgpack library can serialize."""
 
 

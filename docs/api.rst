@@ -94,8 +94,11 @@ Convenience Types
 Contract Types
 ~~~~~~~~~~~~~~
 
-.. autoclass:: HasSettings
+.. autoclass:: SupportsIsoFormat
    :members:
 
-.. autoclass:: DefinesIsoFormat
+.. autoclass:: SupportsSettings
+   :members:
+
+.. autoclass:: SupportsDataclassFields
    :members:

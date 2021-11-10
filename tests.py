@@ -1,8 +1,14 @@
+import array
 import base64
+import collections
+import dataclasses
 import datetime
+import decimal
+import ipaddress
 import json
 import math
 import os
+import pathlib
 import pickle
 import struct
 import typing
@@ -37,7 +43,7 @@ class Context:
         self.settings = {}
 
 
-def pack_string(obj):
+def pack_string(obj) -> bytes:
     """Optimally pack a string according to msgpack format"""
     payload = str(obj).encode('ASCII')
     pl = len(payload)
@@ -62,6 +68,22 @@ def pack_bytes(payload):
     else:
         prefix = struct.pack('>BI', 0xC6, pl)
     return prefix + payload
+
+
+def pack_integer(payload):
+    if payload >= 0:
+        nbits = payload.bit_length()
+        codes = [
+            (7, b'', '>0sB'),  # special case of no typecode
+            (8, 0xCC, 'BB'),
+            (16, 0xCD, '>BH'),
+            (32, 0xCE, '>BL'),
+            (64, 0xCF, '>BQ'),
+        ]
+        for max_bits, typecode, fmt_str in codes:
+            if nbits <= max_bits:
+                return struct.pack(fmt_str, typecode, payload)
+    raise RuntimeError(f'pack_integer cannot pack {payload!r}')
 
 
 class SendResponseTests(testing.AsyncHTTPTestCase):
@@ -347,6 +369,48 @@ class JSONTranscoderTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.transcoder.dumps(object())
 
+    def test_that_decimals_are_converted_to_floats(self):
+        pi = decimal.Decimal('3.142857142857142857142857143')
+        dumped = self.transcoder.dumps({'n': pi})
+        loaded = json.loads(dumped)
+        self.assertEqual(loaded['n'], float(pi))
+
+    def test_that_dataclasses_are_handled_as_dicts(self):
+        @dataclasses.dataclass
+        class Point:
+            x: int
+            y: int
+
+        datum = Point(3, 4)
+        dumped = self.transcoder.dumps({'point': datum})
+        expected = json.dumps({'point': dataclasses.asdict(datum)})
+        self.assertDictEqual(json.loads(expected), json.loads(dumped))
+
+    def test_that_ip_addresses_are_supported(self):
+        for addr in {'10.0.0.0', '::1'}:
+            datum = ipaddress.ip_address(addr)
+            dumped = self.transcoder.dumps({'addr': datum})
+            self.assertEqual(dumped, '{"addr":"%s"}' % (datum.exploded, ))
+
+    def test_that_paths_are_supported(self):
+        p = pathlib.Path(__file__)
+        dumped = self.transcoder.dumps({'path': p})
+        self.assertEqual(dumped, '{"path":"%s"}' % (p, ))
+
+    def test_that_array_is_supported(self):
+        a = array.array('B')
+        a.extend(range(255))
+        dumped = self.transcoder.dumps({'array': a})
+        self.assertEqual(dumped,
+                         '{"array":[%s]}' % (','.join(str(x) for x in a), ))
+
+    def test_that_namedtuples_are_handled_as_tuples(self):
+        Point = collections.namedtuple('Point', ['x', 'y'])
+        datum = Point(3, 4)
+        dumped = self.transcoder.dumps({'point': datum})
+        expected = json.dumps({'point': [x for x in datum]})
+        self.assertDictEqual(json.loads(expected), json.loads(dumped))
+
 
 class ContentSettingsTests(unittest.TestCase):
     def test_that_handler_listed_in_available_content_types(self):
@@ -552,6 +616,71 @@ class MsgPackTranscoderTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 transcoders.MsgPackTranscoder()
 
+    def test_that_decimals_are_converted_to_floats(self):
+        pi = decimal.Decimal('3.142857142857142857142857143')
+        dumped = self.transcoder.packb(pi)
+        # 0xCB -> 8 byte IEEE float in big endian order
+        self.assertEqual(0xcb, dumped[0])
+        self.assertEqual(struct.pack('>d', float(pi)), dumped[1:])
+
+    def test_that_dataclasses_are_handled_as_dicts(self):
+        @dataclasses.dataclass
+        class Point:
+            x: int
+            y: int
+
+        datum = typing.cast(type_info.SupportsDataclassFields, Point(3, 4))
+        dumped = self.transcoder.packb(datum)
+        expected = struct.pack(
+            'BBBBBBB',
+            0x82,  # mapping of two fields
+            0xA1,  # string of a single byte
+            ord('x'),
+            3,  # positive integer less than 128
+            0xA1,  # string of a single byte
+            ord('y'),
+            4,  # positive integer less than 128
+        )
+        self.assertEqual(expected, dumped)
+
+    def test_that_ip_addresses_are_supported(self):
+        for addr in {'10.0.0.0', '::1'}:
+            datum = ipaddress.ip_address(addr)
+            dumped = self.transcoder.packb(datum)
+            self.assertEqual(pack_string(datum.exploded), dumped)
+
+    def test_that_paths_are_supported(self):
+        p = pathlib.Path(__file__)
+        dumped = self.transcoder.packb(p)
+        self.assertEqual(pack_string(str(p)), dumped)
+
+    def test_that_array_is_packed_as_array(self):
+        a = array.array('B')
+        a.extend(range(255))
+        expected = struct.pack(
+            '>BH',
+            0xDC,  # array of between 16 & (2^16)-1 elements
+            len(a),
+        )
+        expected += b''.join(pack_integer(elm) for elm in a)
+        self.assertEqual(expected, self.transcoder.packb(a))
+
+        # msgpack handling for an array of Unicode characters
+        # is to pack them as a list of strings instead of a
+        # list of integers
+        data = 'hi there'
+        a = array.array('u', data)
+        expected = bytes([0x90 | len(data)])
+        for ch in data:
+            expected += pack_string(ch)
+        self.assertEqual(expected, self.transcoder.packb(a))
+
+    def test_that_namedtuples_are_handled_as_tuples(self):
+        Point = collections.namedtuple('Point', ['x', 'y'])
+        datum = Point(3, 4)
+        expected = struct.pack('>BBB', 0x90 | 2, 3, 4)
+        self.assertEqual(expected, self.transcoder.packb(datum))
+
 
 class FormUrlEncodingTranscoderTests(unittest.TestCase):
     transcoder: type_info.Transcoder
@@ -696,3 +825,50 @@ class FormUrlEncodingTranscoderTests(unittest.TestCase):
         _, result = self.transcoder.to_bytes(value)
         self.assertEqual(b'list=1&list=2&tuple=1&tuple=2&set=1&set=2&str=val',
                          result)
+
+    def test_that_decimals_are_stringified(self):
+        pi = decimal.Decimal('3.142857142857142857142857143')
+        _, result = self.transcoder.to_bytes({'pi': pi})
+        self.assertEqual('pi={}'.format(str(pi)).encode(), result)
+
+    def test_that_dataclasses_are_handled_as_dicts(self):
+        @dataclasses.dataclass
+        class Point:
+            x: int
+            y: int
+
+        datum = typing.cast(type_info.SupportsDataclassFields, Point(3, 4))
+        _, result = self.transcoder.to_bytes(datum)
+        self.assertEqual(b'x=3&y=4', result)
+
+    def test_that_ip_addresses_are_supported(self):
+        for addr in {'10.0.0.0', '::1'}:
+            datum = ipaddress.ip_address(addr)
+            _, result = self.transcoder.to_bytes({'addr': datum})
+            self.assertEqual(
+                f'addr={datum.exploded}'.replace(':', '%3A').encode(), result)
+
+    def test_that_paths_are_supported(self):
+        p = pathlib.Path(__file__)
+        _, result = self.transcoder.to_bytes({'path': p})
+        self.assertEqual(f'path={str(p)}'.replace('/', '%2F').encode(), result)
+
+    def test_that_arrays_are_supported(self):
+        self.transcoder: transcoders.FormUrlEncodedTranscoder
+
+        a = array.array('B', os.urandom(128))
+        _, expected = self.transcoder.to_bytes({'array': a.tolist()})
+        _, result = self.transcoder.to_bytes({'array': a})
+        self.assertEqual(expected, result)
+
+        self.transcoder.options.encode_sequences = True
+        _, expected = self.transcoder.to_bytes({'array': a.tolist()})
+        _, result = self.transcoder.to_bytes({'array': a})
+        self.assertEqual(expected, result)
+
+    def test_that_namedtuples_are_handled_as_tuples(self):
+        Point = collections.namedtuple('Point', ['x', 'y'])
+        datum = Point(3, 4)
+        _, expected = self.transcoder.to_bytes({'point': (3, 4)})
+        _, result = self.transcoder.to_bytes({'point': datum})
+        self.assertEqual(expected, result)
